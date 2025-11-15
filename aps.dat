@@ -9,7 +9,7 @@
 # choose intermediate facilities accorting a criteria that improve service
 # quality. Consider health care teams. 
 #############################################################################
-# glpsol -m hc.mod -d hc.dat --cuts
+# glpsol -m aps.mod -d aps.dat --cuts
 
 
 data;
@@ -277,7 +277,7 @@ THC6    20
 ;
 
 param FC1:=	
-PHC1	100
+PHC1	1000
 PHC2	1000
 PHC3	1000
 PHC4	1000
@@ -320,7 +320,7 @@ PHC6	0
 PHC7	1000
 PHC8	1000
 PHC9	1000
-PHC10	10000
+PHC10	1000
 ;
 
 # Annualized Investment for operating NEW SHC j    ($/year)
@@ -391,27 +391,27 @@ DE3	1e-2
 
 param CNES1
 :	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6:=
-ME1	5	5	5	10	10	5
+ME1	5	15	15	10	20	15
 EF1	5	5	1	5	1	1
-ACS	5	5	5	1	1	1
-DE1	5	5	5	5	5	5
+ACS	5	1	3	1	1	1
+DE1	1	5	1	1	5	5
 ;											
 
 param CNES2
 :	SHC1 SHC2 SHC3 SHC4:=
-ME2	3	4	3	3
-EF2	3	4	3	3
-FON	3	4	3	3
-OCD	3	3	3	5
-DE2	3	3	3	5
+ME2	3	4	3	8
+EF2	3	4	3	6
+FON	3	4	3	10
+OCD	3	3	3	9
+DE2	3	3	3	10
 ;									
 
 param CNES3
 :	THC1 THC2 THC3:=
-ME3 2	2	2
-EF3 2	6	6
+ME3 2	2	9
+EF3 2	10	10
 TE3 8	2	2
-FIS 5	2	2
+FIS 15	2	2
 DE3 2	2	6
 ;							
 
