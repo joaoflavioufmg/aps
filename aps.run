@@ -271,7 +271,7 @@ printf: "========================================\n";
 printf: "Mun     > PHC   :(flow)\n";
 printf: "========================================\n";
 for{i in I}{
-    printf"M[%-4d] > \t: %d\n", i, W[i];
+    printf"M[%-4d] > \t : %d\n", i, W[i];
     for{j1 in L1: u1[i,j1] > 0}{
     printf"\t> L[%-4s]: %d\n", j1, u1[i,j1];
     }
@@ -281,7 +281,8 @@ printf: "========================================\n";
 printf: "PHC     > SHC   :(flow)\n";
 printf: "========================================\n";
 for{j1 in L1: sum{i in I}u1[i,j1] > 0}{
-    printf"L[%-4s] > \t: %d\n", j1, O1[j1]*sum{i in I}u1[i,j1];
+    printf"L[%-4s] > \t : %d\t(%d x %.2f)\n", 
+        j1, O1[j1]*sum{i in I}u1[i,j1], sum{i in I}u1[i,j1], O1[j1];
     for{j2 in L2: u2[j1,j2] > 0}{
     printf"\t> L[%-4s]: %d\n", j2, u2[j1,j2];
     }
@@ -291,7 +292,8 @@ printf: "========================================\n";
 printf: "SHC     > THC   :(flow)\n";
 printf: "========================================\n";
 for{j2 in L2: sum{j1 in L1}u2[j1,j2]>0}{
-    printf: "L[%-4s] > \t : %d\n", j2, O2[j2]*sum{j1 in L1}u2[j1,j2];
+    printf: "L[%-4s] > \t : %d\t(%d x %.2f)\n", 
+        j2, O2[j2]*sum{j1 in L1}u2[j1,j2], sum{j1 in L1}u2[j1,j2], O2[j2];
     for{j3 in L3: u3[j2,j3] > 0}{
         printf: "\t> L[%-4s]: %d\n", j3, u3[j2,j3];
     }
