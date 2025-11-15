@@ -197,45 +197,7 @@ var newhire2{E[2],L2}, integer, >= 0; # New professionals hired at L2 (prof)
 var newhire3{E[3],L3}, integer, >= 0; # New professionals hired at L3 (prof)
 
 var Total_Costs_APS, >=0; # Aux variable for report
-#################################################
-# OBJECTIVE FUNCTION
-#################################################
 
-minimize Total_Costs:
-    # Patient transportation cost
-      sum{i in I, j1 in L1}D1[i,j1]*TC1[i,j1]*u1[i,j1] 
-    + sum{j1 in L1, j2 in L2}D2[j1,j2]*TC2[j1,j2]*u2[j1,j2]  
-    + sum{j2 in L2, j3 in L3}D3[j2,j3]*TC3[j2,j3]*u3[j2,j3] 
-    # Cost of existing units
-    + sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] 
-    + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] 
-    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3]
-    # New unit cost
-    + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
-    + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
-    + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]    
-    # Cost of NEW teams hired
-    + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
-    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
-    + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
-    # Team relocation costs
-    + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-         RC1[e1]*DL1[from,to]*transfer1[e1,from,to]
-    + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-         RC2[e2]*DL2[from,to]*transfer2[e2,from,to]
-    + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*DL3[from,to]*transfer3[e3,from,to]    
-    # Penalty for surplus or deficit
-    + sum{e1 in E[1], j1 in EL[1]}CE1[e1]*surplus1[e1,j1] 
-    + sum{e2 in E[2], j2 in EL[2]}CE2[e2]*surplus2[e2,j2] 
-    + sum{e3 in E[3], j3 in EL[3]}CE3[e3]*surplus3[e3,j3] 
-    + sum{e1 in E[1], j1 in L1}CE1[e1]*deficit1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}CE2[e2]*deficit2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}CE3[e3]*deficit3[e3,j3] 
-    # Variable cost per patient
-    + sum{i in I, j1 in L1}VC1[j1]*u1[i,j1] 
-    + sum{j1 in L1, j2 in L2}VC2[j2]*u2[j1,j2]  
-    + sum{j2 in L2, j3 in L3}VC3[j3]*u3[j2,j3];
 
 #################################################
 # CONSTRAINTS
@@ -381,8 +343,47 @@ s.t. APSCost: Total_Costs_APS =
 # Overall budget constraint
 s.t. APSBudgetConstraint:  Total_Costs_APS <= BUDGET;
 
-# solve;
+#################################################
+# OBJECTIVE FUNCTION
+#################################################
 
+minimize Total_Costs:
+    # Patient transportation cost
+      sum{i in I, j1 in L1}D1[i,j1]*TC1[i,j1]*u1[i,j1] 
+    + sum{j1 in L1, j2 in L2}D2[j1,j2]*TC2[j1,j2]*u2[j1,j2]  
+    + sum{j2 in L2, j3 in L3}D3[j2,j3]*TC3[j2,j3]*u3[j2,j3] 
+    # Cost of existing units
+    + sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] 
+    + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] 
+    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3]
+    # New unit cost
+    + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
+    + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
+    + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]    
+    # Cost of NEW teams hired
+    + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+    + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
+    # Team relocation costs
+    + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
+         RC1[e1]*DL1[from,to]*transfer1[e1,from,to]
+    + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
+         RC2[e2]*DL2[from,to]*transfer2[e2,from,to]
+    + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
+         RC3[e3]*DL3[from,to]*transfer3[e3,from,to]    
+    # Penalty for surplus or deficit
+    + sum{e1 in E[1], j1 in EL[1]}10*CE1[e1]*surplus1[e1,j1] 
+    + sum{e2 in E[2], j2 in EL[2]}10*CE2[e2]*surplus2[e2,j2] 
+    + sum{e3 in E[3], j3 in EL[3]}10*CE3[e3]*surplus3[e3,j3] 
+    + sum{e1 in E[1], j1 in L1}10*CE1[e1]*deficit1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}10*CE2[e2]*deficit2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}10*CE3[e3]*deficit3[e3,j3] 
+    # Variable cost per patient
+    + sum{i in I, j1 in L1}VC1[j1]*u1[i,j1] 
+    + sum{j1 in L1, j2 in L2}VC2[j2]*u2[j1,j2]  
+    + sum{j2 in L2, j3 in L3}VC3[j3]*u3[j2,j3];
+
+# solve;
 # #################################################
 # # OUTPUT REPORTS
 # #################################################
@@ -650,7 +651,8 @@ s.t. APSBudgetConstraint:  Total_Costs_APS <= BUDGET;
 # printf: "==========================================================="; 
 # printf: "===========================================================\n";
 
-# printf:"\n\nRelatorio gerado em: %s\t\n",time;
-# printf:"Desenvolvimento: Joao Flavio de F. Almeida\t\n";
+# # printf:"\n\nRelatorio gerado em: %s\t\n",time;
+# # printf:"Desenvolvimento: Joao Flavio de F. Almeida\t\n";
 
 end;
+

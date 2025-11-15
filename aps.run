@@ -37,8 +37,8 @@ data aps.dat;
 # option solver './gurobi'; # gurobi na mesma pasta dos outros arquivos ou...
 # option solver '/home/joao/Dropbox/05-Softwares/01-Otimizacao/03-AMPL/00-AMPL/ampl/gurobi';
 
-# ###############################
 # Windows
+# ###############################
 option solver gurobi;
 option gurobi_options $gurobi_options
 #    'lpmethod 1'
