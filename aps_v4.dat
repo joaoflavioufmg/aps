@@ -122,50 +122,50 @@ FIS 30
 DE3 30
 ;
 
-# param D0_1 
-# :	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6 PHC7 PHC8 PHC9 PHC10:=
-# 1	1	1	1	1	1	1	1	1	1	1	
-# 2	1	1	1	1	1	1	1	1	1	1	
-# 3	1	1	1	1	1	1	1	1	1	1	
-# 4	1	1	1	1	1	1	1	1	1	1	
-# 5	1	1	1	1	1	1	1	1	1	1	
-# 6	1	1	1	1	1	1	1	1	1	1	
-# 7	1	1	1	1	1	1	1	1	1	1	
-# 8	1	1	1	1	1	1	1	1	1	1	
-# 9	1	1	1	1	1	1	1	1	1	1	
-# 10	1	1	1	1	1	1	1	1	1	1	
-# 11	1	1	1	1	1	1	1	1	1	1	
-# 12	1	1	1	1	1	1	1	1	1	1	
-# 13	1	1	1	1	1	1	1	1	1	1	
-# 14	1	1	1	1	1	1	1	1	1	1	
-# 15	1	1	1	1	1	1	1	1	1	1	
-# ;
+param D1 
+:	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6 PHC7 PHC8 PHC9 PHC10:=
+1	1	1	1	1	1	1	1	1	1	1	
+2	1	1	1	1	1	1	1	1	1	1	
+3	1	1	1	1	1	1	1	1	1	1	
+4	1	1	1	1	1	1	1	1	1	1	
+5	1	1	1	1	1	1	1	1	1	1	
+6	1	1	1	1	1	1	1	1	1	1	
+7	1	1	1	1	1	1	1	1	1	1	
+8	1	1	1	1	1	1	1	1	1	1	
+9	1	1	1	1	1	1	1	1	1	1	
+10	1	1	1	1	1	1	1	1	1	1	
+11	1	1	1	1	1	1	1	1	1	1	
+12	1	1	1	1	1	1	1	1	1	1	
+13	1	1	1	1	1	1	1	1	1	1	
+14	1	1	1	1	1	1	1	1	1	1	
+15	1	1	1	1	1	1	1	1	1	1	
+;
 
-# param D1_2 
-# :	SHC1 SHC2 SHC3 SHC4 SHC5 SHC6 SHC7 SHC8:=
-# PHC1	2	2	2	2	2	2	2	2	
-# PHC2	2	2	2	2	2	2	2	2	
-# PHC3	2	2	2	2	2	2	2	2	
-# PHC4	2	2	2	2	2	2	2	2	
-# PHC5	2	2	2	2	2	2	2	2	
-# PHC6	2	2	2	2	2	2	2	2	
-# PHC7	2	2	2	2	2	2	2	2	
-# PHC8	2	2	2	2	2	2	2	2	
-# PHC9	2	2	2	2	2	2	2	2	
-# PHC10	2	2	2	2	2	2	2	2		
-# ;
+param D2 
+:	SHC1 SHC2 SHC3 SHC4 SHC5 SHC6 SHC7 SHC8:=
+PHC1	2	2	2	2	2	2	2	2	
+PHC2	2	2	2	2	2	2	2	2	
+PHC3	2	2	2	2	2	2	2	2	
+PHC4	2	2	2	2	2	2	2	2	
+PHC5	2	2	2	2	2	2	2	2	
+PHC6	2	2	2	2	2	2	2	2	
+PHC7	2	2	2	2	2	2	2	2	
+PHC8	2	2	2	2	2	2	2	2	
+PHC9	2	2	2	2	2	2	2	2	
+PHC10	2	2	2	2	2	2	2	2		
+;
 
-# param D2_3 
-# :	THC1 THC2 THC3 THC4 THC5 THC6:=
-# SHC1	3	3	3	3	3	3	
-# SHC2	3	3	3	3	3	3	
-# SHC3	3	3	3	3	3	3	
-# SHC4	3	3	3	3	3	3	
-# SHC5	3	3	3	3	3	3	
-# SHC6	3	3	3	3	3	3	
-# SHC7	3	3	3	3	3	3	
-# SHC8	3	3	3	3	3	3	
-# ;
+param D3 
+:	THC1 THC2 THC3 THC4 THC5 THC6:=
+SHC1	3	3	3	3	3	3	
+SHC2	3	3	3	3	3	3	
+SHC3	3	3	3	3	3	3	
+SHC4	3	3	3	3	3	3	
+SHC5	3	3	3	3	3	3	
+SHC6	3	3	3	3	3	3	
+SHC7	3	3	3	3	3	3	
+SHC8	3	3	3	3	3	3	
+;
 
 # # Distance matrix between same-level facilities (for team transfer)
 # # {EL[1], L[1]} default 0; # Distance between L1 facilities (min)
@@ -456,47 +456,30 @@ param U:=
 3	2
 ; 
 
-# Primary care facility (PCF)  — O1_0  O1_2  O1_3
-# The proportion of patients in a L-1 to i in I, and L-3 PCF.
-param: O1_0   O1_2   O1_3 :=
-PHC1   0.71   0.20   0.05
-PHC2   0.71   0.20   0.05
-PHC3   0.71   0.20   0.05
-PHC4   0.71   0.20   0.05
-PHC5   0.71   0.20   0.05
-PHC6   0.71   0.20   0.05
-PHC7   0.71   0.20   0.05
-PHC8   0.71   0.20   0.05
-PHC9   0.71   0.20   0.05
-PHC10  0.71   0.20   0.05
-;
+# The proportion of patients in a L-1 to a L-2 PCF.
+param O1:=
+PHC1	0.4
+PHC2	0.4
+PHC3	0.4
+PHC4	0.4
+PHC5	0.4
+PHC6	0.4
+PHC7	0.4
+PHC8	0.4
+PHC9	0.4
+PHC10	0.4
+;	
 
-# Secondary care facility (SCF) — O2_0  O2_1  O2_3
-# The proportion of patients in a L-2 to i in I,, L-1 and L-3 SCF.
-param: O2_0   O2_1   O2_3 :=
-SHC1   0.65   0.20   0.10
-SHC2   0.65   0.20   0.10
-SHC3   0.65   0.20   0.10
-SHC4   0.65   0.20   0.10
-SHC5   0.65   0.20   0.10
-SHC6   0.65   0.20   0.10
-SHC7   0.65   0.20   0.10
-SHC8   0.65   0.20   0.10
-;
-
-# Tertiary care facility (TCF) — O3_0  O3_1  O3_2
-# The proportion of patients in a L-3 to i in I, L-1 and L-2 TCF.
-param: O3_0   O3_1   O3_2 :=
-THC1   0.80   0.10   0.05
-THC2   0.80   0.10   0.05
-THC3   0.80   0.10   0.05
-THC4   0.80   0.10   0.05
-THC5   0.80   0.10   0.05
-THC6   0.80   0.10   0.05
-;
-
-
-
+param O2:=
+SHC1	0.7
+SHC2	0.7
+SHC3	0.7
+SHC4	0.7
+SHC5	0.7
+SHC6	0.7
+SHC7	0.7
+SHC8	0.7
+;	
 #################################################
 
 end;
