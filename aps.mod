@@ -91,9 +91,9 @@ set L1:= L[1] inter H1;
 set L2:= L[2] inter H2;
 set L3:= L[3] inter H3;
 
-display L1;
-display L2;
-display L3;
+# display L1;
+# display L2;
+# display L3;
 
 ################################################
 param TC1{I,L[1]}; # Travel cost/pat  from demand point i to L1   ($/min)
@@ -116,13 +116,13 @@ param I_L2:= 2000; # Investimento (custo de implantação) na nova UBS: Obra, re
 param I_L3:= 3000; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
 # Annualized Investment for operating NEW PHC j    ($/year)
 param IA1{CL[1]} := round(I_L1*(R*(1+R)^N)/((1+R)^N-1),0); 
-display IA1;
+# display IA1;
 # Annualized Investment for operating NEW SHC j    ($/year)
 param IA2{CL[2]}:= round(I_L2*(R*(1+R)^N)/((1+R)^N-1),0); 
-display IA2;
+# display IA2;
 # Annualized Investment for operating NEW THC j    ($/year)
 param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0); 
-display IA3;
+# display IA3;
 # ############################################################################### 
 
 param W{I}; # The population size at demand point i (pop)
@@ -440,7 +440,8 @@ s.t. R3c{j3 in L3}:
 # For EXISTING locations: calculate surplus/deficit
 s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
     CNES1[e1,j1]  # Existing teams
-    - (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1]) *MS1[e1]  # Required teams based on patient flow
+    # Required teams based on patient flow
+    - (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[e1]  
     + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
     + newhire1[e1,j1]  # New teams hired
@@ -819,7 +820,8 @@ for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
             if j1 in CL[1] then "*" else " ",
             e1,
             if j1 in EL[1] then CNES1[e1,j1] else 0,
-            sum{i in I}u0_1[i,j1]*MS1[e1],
+            # sum{i in I}u0_1[i,j1]*MS1[e1],
+            (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[e1],
             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
             newhire1[e1,j1],
@@ -838,7 +840,8 @@ for{j2 in L2: sum{j1 in L1}u1_2[j1,j2] > 0}{
             if j2 in CL[2] then "*" else " ",
             e2,
             if j2 in EL[2] then CNES2[e2,j2] else 0,
-            sum{j1 in L1}u1_2[j1,j2]*MS2[e2],
+            # sum{j1 in L1}u1_2[j1,j2]*MS2[e2],
+            (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2] + sum{i in I} ut2[i,j2])*MS2[e2],
             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
             newhire2[e2,j2],
@@ -857,7 +860,8 @@ for{j3 in L3: sum{j2 in L2}u2_3[j2,j3] > 0}{
             if j3 in CL[3] then "*" else " ",
             e3,
             if j3 in EL[3] then CNES3[e3,j3] else 0,
-            sum{j2 in L2}u2_3[j2,j3]*MS3[e3],
+            # sum{j2 in L2}u2_3[j2,j3]*MS3[e3],
+            (sum{i in I}u0_3[i,j3] + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3] + sum{i in I} ut3[i,j3])*MS3[e3],
             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
             newhire3[e3,j3],
@@ -1025,11 +1029,12 @@ printf: "===========================================================\n";
 # display{i in I, j3 in L3: u0_3[i,j3]>0}: u0_3[i,j3];
 # display{i in I, j3 in L3: ut3[i,j3]>0}: ut3[i,j3];
 
-display{j1 in L1, i in I: u1_0[j1,i]>0}: u1_0[j1,i];
-display{j1 in L1: y1[j1] > 0}: y1[j1];
 
-display{j2 in L2, i in I: u2_0[j2,i]>0}: u2_0[j2,i];
-display{j3 in L3, i in I: u3_0[j3,i]>0}: u3_0[j3,i];
+# display{j1 in L1, i in I: u1_0[j1,i]>0}: u1_0[j1,i];
+# display{j1 in L1: y1[j1] > 0}: y1[j1];
+
+# display{j2 in L2, i in I: u2_0[j2,i]>0}: u2_0[j2,i];
+# display{j3 in L3, i in I: u3_0[j3,i]>0}: u3_0[j3,i];
 
 
 end;
