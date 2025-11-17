@@ -108,9 +108,22 @@ param FC1{L[1]}; # Fixed cost per period for operating PHC j    ($/month)
 param FC2{L[2]}; # Fixed cost per period for operating SHC j    ($/month)
 param FC3{L[3]}; # Fixed cost per period for operating THC j    ($/month)
 
-param IA1{L[1]}; # Annualized Investment for operating NEW PHC j    ($/year)
-param IA2{L[2]}; # Annualized Investment for operating NEW SHC j    ($/year)
-param IA3{L[3]}; # Annualized Investment for operating NEW THC j    ($/year)
+# ############## Amortização anual para Investimento em nova UBS ############## 
+param R:=0.15;   # Taxa de desconto anual
+param N:=20;     # Vida útil (anos)
+param I_L1:= 1000; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
+param I_L2:= 2000; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
+param I_L3:= 3000; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
+# Annualized Investment for operating NEW PHC j    ($/year)
+param IA1{CL[1]} := round(I_L1*(R*(1+R)^N)/((1+R)^N-1),0); 
+display IA1;
+# Annualized Investment for operating NEW SHC j    ($/year)
+param IA2{CL[2]}:= round(I_L2*(R*(1+R)^N)/((1+R)^N-1),0); 
+display IA2;
+# Annualized Investment for operating NEW THC j    ($/year)
+param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0); 
+display IA3;
+# ############################################################################### 
 
 param W{I}; # The population size at demand point i (pop)
 
@@ -927,6 +940,27 @@ for{j2 in L2: (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u
     # THC
     for{j3 in L3: u2_3[j2,j3] > 0}{
     printf"\t> L[%-4s]: %d\n", j3, u2_3[j2,j3];}
+}
+
+printf: "========================================\n";
+printf: "THC     > Reg + PHC + SHC  :(flow)\n";
+printf: "========================================\n";
+for{j3 in L3: (sum{i in I}u0_3[i,j3] + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]+ sum{i in I} ut3[i,j3])>0}{
+    printf: "L[%-4s] > \t : %d\t(%d + %d + %d)\n", 
+        j3, 
+        sum{i in I}(u0_3[i,j3] + ut3[i,j3])
+        + sum{j1 in L1}u1_3[j1,j3] 
+        + sum{j2 in L2}u2_3[j2,j3], 
+        sum{i in I}(u0_3[i,j3] + ut3[i,j3]), sum{j1 in L1}u1_3[j1,j3], sum{j2 in L2}u2_3[j2,j3];
+    # Reg
+    for{i in I: u3_0[j3,i] > 0}{
+    printf"\t> L[%-4s]: %d\n", i, u3_0[j3,i];} 
+    # PHC
+    for{j1 in L1: u3_1[j3,j1] > 0}{
+    printf"\t> L[%-4s]: %d\n", j1, u3_1[j3,j1];}
+    # SHC
+    for{j2 in L2: u3_2[j3,j2] > 0}{
+    printf"\t> L[%-4s]: %d\n", j2, u3_2[j3,j2];}
 }
 
 printf: "========================================\n";
