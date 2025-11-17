@@ -309,40 +309,40 @@ THC5	300
 THC6	300
 ;	
 
-# Annualized Investment for operating NEW PHC j    ($/year)
-param IA1:= 
-PHC1	0
-PHC2	0
-PHC3	0
-PHC4	0
-PHC5	0
-PHC6	0
-PHC7	1000
-PHC8	1000
-PHC9	1000
-PHC10	1000
-;
+# # Annualized Investment for operating NEW PHC j    ($/year)
+# param IA1:= 
+# PHC1	0
+# PHC2	0
+# PHC3	0
+# PHC4	0
+# PHC5	0
+# PHC6	0
+# PHC7	1000
+# PHC8	1000
+# PHC9	1000
+# PHC10	1000
+# ;
 
-# Annualized Investment for operating NEW SHC j    ($/year)
-param IA2:= 
-SHC1	0
-SHC2	0
-SHC3	0
-SHC4	0
-SHC5	5000
-SHC6	5000
-SHC7	5000
-SHC8	5000
-;
+# # Annualized Investment for operating NEW SHC j    ($/year)
+# param IA2:= 
+# SHC1	0
+# SHC2	0
+# SHC3	0
+# SHC4	0
+# SHC5	5000
+# SHC6	5000
+# SHC7	5000
+# SHC8	5000
+# ;
 
-param IA3:= # Annualized Investment for operating NEW THC j    ($/year)
-THC1	0
-THC2	0
-THC3	0
-THC4	3000
-THC5	3000
-THC6	3000
-;
+# param IA3:= # Annualized Investment for operating NEW THC j    ($/year)
+# THC1	0
+# THC2	0
+# THC3	0
+# THC4	3000
+# THC5	3000
+# THC6	3000
+# ;
 
 
 # The population size 
