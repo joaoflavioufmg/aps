@@ -49,15 +49,18 @@ set K:=
 
 # Basic health care units teams (PHC)
 set E[1] :=
-eSF # Equipe de Saúde da Família
-eSB # Equipe de Saúde Bucal
-eMU # Equipe Multi
+ME1 # Family physician
+EF1 # Family nurse
+ACS # Community health agent
+DE1 # Dentist
 ;
 
 # Intermediate health care units teams (SHC)
 set E[2] :=
 ME2 # Clinical physician
 EF2 # Nurse
+FON # Speech therapist
+OCD # Occupational therapist
 DE2 # Dentist
 ;
 
@@ -65,6 +68,8 @@ DE2 # Dentist
 set E[3] :=
 ME3 # Clinical physician
 EF3 # Nurse
+TE3 # Nursing technicians
+FIS # Physiotherapist
 DE3 # Dentist
 ;
 
@@ -93,15 +98,18 @@ param BUDGET := 164300; # Overall budget constraint ($/year)
 
 # Team cost K1 ($/year)
 param CE1:=
-eSF 10
-eSB 10
-eMU 10
+ME1 10
+EF1 10
+ACS 10
+DE1 10
 ;
 
 # Team cost K2 ($/year)
 param CE2:=
 ME2 20
 EF2 20
+FON 20
+OCD 20
 DE2 20
 ;
 
@@ -109,6 +117,8 @@ DE2 20
 param CE3:=
 ME3 30
 EF3 30
+TE3 30
+FIS 30
 DE3 30
 ;
 
@@ -355,44 +365,54 @@ param W:=
 15	300	
 ;			
 
-# # Ministry of Health parameter for requirements PHC
-# param MS1:=
-# eSF	2e-3 
-# eSB 2e-3
-# eMU 2e-3
-# ; 
+# Ministry of Health parameter for requirements PHC
+param MS1:=
+ME1	2e-2 
+EF1 2e-3
+ACS 2e-3
+DE1	2e-3
+; 
 
 param MS2:=
 ME2 1e-2
 EF2 1e-2
+FON 1e-2
+OCD 1e-2
 DE2 1e-2
 ;
 
 param MS3:=
 ME3 1e-2
 EF3 2e-2
+TE3 1e-2
+FIS 2e-2
 DE3	1e-2
 ;
 
 param CNES1
 :	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6:=
-eSF	4	5	5	1	2	1
-eSB	1	5	1	5	1	1
-eMU	1	1	3	1	1	1
+ME1	14	15	15	10	20	15
+EF1	1	5	1	5	1	1
+ACS	5	1	3	1	1	1
+DE1	1	1	1	1	5	4
 ;											
 
 param CNES2
 :	SHC1 SHC2 SHC3 SHC4:=
-ME2	3	4	3	2
+ME2	3	4	3	8
 EF2	3	4	5	6
-DE2	3	3	3	4
+FON	3	4	3	10
+OCD	3	3	3	9
+DE2	3	3	3	10
 ;									
 
 param CNES3
 :	THC1 THC2 THC3:=
-ME3 2	2	1
-EF3 2	5	3
-DE3 2	2	2
+ME3 2	2	9
+EF3 2	10	13
+TE3 8	2	2
+FIS 15	7	2
+DE3 2	2	9
 ;							
 
 # The capacity of a level-1 PCF in K.
