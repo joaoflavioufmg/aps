@@ -127,14 +127,7 @@ param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0);
 
 param W{I}; # The population size at demand point i (pop)
 
-# Ministry of Health parameter for requirements PHC (prof/pop)
-param MS1{e1 in E[1]}:= if e1 = 'eSF' then 2e-3 else
-                        if e1 = 'eSB' then 2e-3 else
-                        if e1 = 'eMU' then 2e-3/9; 
-
-# # Proportionality parameter for eMU
-# param RATIO_eSF_eMU := 9;  # 9 eSF per 1 eMU
-
+param MS1{E[1]}; # Ministry of Health parameter for requirements PHC (prof/pop)
 param MS2{E[2]}; # Ministry of Health parameter for requirements SHC (prof/pop)
 param MS3{E[3]}; # Ministry of Health parameter for requirements THC (prof/pop)
 
@@ -464,40 +457,6 @@ s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
 # Surplus can only come from existing locations with teams
 s.t. SurplusLimit1{e1 in E[1], j1 in EL[1] inter L1}:
     surplus1[e1,j1] <= CNES1[e1,j1];
-
-
-# # GLOBAL PROPORTIONALITY: 1 eMU for every 9 eSF
-# # Total eMU must be sufficient to support all eSF (1 eMU per 9 eSF)
-# s.t. Global_eMU_to_eSF_Ratio_EL:
-#     sum{j1 in EL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eMU',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eMU',from,j1] # Teams transferred IN
-#         - sum{to in L1: to != j1}transfer1['eMU',j1,to] # Teams transferred OUT         
-#         + newhire1['eMU',j1]
-#     ) * RATIO_eSF_eMU
-#     >=
-#     sum{j1 in EL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eSF',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1]
-#         - sum{to in L1: to != j1}transfer1['eSF',j1,to]        
-#         + newhire1['eSF',j1]
-#     );
-
-# # For CANDIDATE locations: only new hires and transfers IN
-# s.t. Global_eMU_to_eSF_Ratio_CL:
-#     sum{j1 in CL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eMU',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eMU',from,j1] # Teams transferred IN        
-#         + newhire1['eMU',j1]
-#     ) * RATIO_eSF_eMU
-#     >=
-#     sum{j1 in CL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eSF',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1]        
-#         + newhire1['eSF',j1]
-#     );
-
-
 
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 2 (SHC)
@@ -854,7 +813,6 @@ printf: "========================================\n";
 printf: "\nPHC Locations:\n";
 printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tSurp\tDef\n";
 printf: "======================================================================\n";
-
 for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
     for{e1 in E[1]}{
         printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
@@ -871,45 +829,6 @@ for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
             deficit1[e1,j1];
     }
 }
-
-# # Print eMU summary first (global)
-# printf: "[GLOBAL]\t%-4s*\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
-#     'eMU',
-#     sum{j1 in EL[1] inter L1}CNES1['eMU',j1],
-#     ceil((sum{j1 in EL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eSF',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN
-#         - sum{to in L1: to != j1}transfer1['eSF',j1,to] # Teams transferred OUT        
-#         + newhire1['eSF',j1]
-#     )) / RATIO_eSF_eMU),
-#     # For CANDIDATE locations: only new hires and transfers IN
-#     ceil((sum{j1 in CL[1] inter L1}(        
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN        
-#         + newhire1['eSF',j1]
-#     )) / RATIO_eSF_eMU),
-#     sum{from in EL[1] inter L1, to in L1: from != to}transfer1['eMU',from,to], # Teams transferred OUT 
-#     sum{j1 in L1}newhire1['eMU',j1],
-#     sum{j1 in EL[1] inter L1}surplus1['eMU',j1],
-#     sum{j1 in L1}deficit1['eMU',j1];
-
-# # Print individual PHC locations (excluding eMU)
-# for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
-#     for{e1 in E[1]: e1 != 'eMU'}{
-#         printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
-#             j1,
-#             if j1 in CL[1] then "*" else " ",
-#             e1,
-#             if j1 in EL[1] then CNES1[e1,j1] else 0,
-#             (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[e1],
-#             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] 
-#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0),
-#             newhire1[e1,j1],
-#             if j1 in EL[1] then surplus1[e1,j1] else 0,
-#             deficit1[e1,j1];
-#     }
-# }
-
-
 
 printf: "\nSHC Locations:\n";
 printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tSurp\tDef\n";
