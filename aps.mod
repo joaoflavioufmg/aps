@@ -96,9 +96,18 @@ set L3:= L[3] inter H3;
 # display L3;
 
 ################################################
-param TC1{I,L[1]}; # Travel cost/pat  from demand point i to L1   ($/min)
-param TC2{L[1],L[2]}; # Travel cost/pat  from L1 to L2            ($/min)
-param TC3{L[2],L[3]}; # Travel cost/pat  from L2 to L3            ($/min)
+# param TC1{I,L[1]}; # Travel cost/pat  from demand point i to L1   ($/min)
+# param TC2{L[1],L[2]}; # Travel cost/pat  from L1 to L2            ($/min)
+# param TC3{L[2],L[3]}; # Travel cost/pat  from L2 to L3            ($/min)
+
+param CKM:= 1;  # Custo por km
+param TC0_1{i in I,j1 in L[1]}:= D0_1[i,j1]*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
+param TC0_2{i in I,j2 in L[2]}:= D0_2[i,j2]*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
+param TC0_3{i in I,j3 in L[3]}:= D0_3[i,j3]*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
+param TC1_2{j1 in L[1], j2 in L[2]}:= D1_2[j1,j2]*CKM; # Travel cost/pat  from L1 to L2            ($/min)
+param TC1_3{j1 in L[1], j3 in L[3]}:= D1_3[j1,j3]*CKM; # Travel cost/pat  from L1 to L2            ($/min)
+param TC2_3{j2 in L[2], j3 in L[3]}:= D2_3[j2,j3]*CKM; # Travel cost/pat  from L2 to L3            ($/min)
+
 
 param VC1{L[1]}; # Variable cost of PHC j / pop h ($/pop)
 param VC2{L[2]}; # Variable cost of SHC j / pop h ($/pop)
@@ -128,9 +137,9 @@ param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0);
 param W{I}; # The population size at demand point i (pop)
 
 # Ministry of Health parameter for requirements PHC (prof/pop)
-param MS1{e1 in E[1]}:= if e1 = 'eSF' then 2e-3 else
-                        if e1 = 'eSB' then 2e-3 else
-                        if e1 = 'eMU' then 2e-3/9; 
+param MS1{e1 in E[1]}:= if e1 = 'eSF' then 2e-2 else
+                        if e1 = 'eSB' then 2e-2 else
+                        if e1 = 'eMU' then 2e-2/9; 
 
 # # Proportionality parameter for eMU
 # param RATIO_eSF_eMU := 9;  # 9 eSF per 1 eMU
@@ -677,11 +686,12 @@ s.t. APSBudgetConstraint:  Total_Costs_APS <= BUDGET;
 
 minimize Total_Costs:
     # Patient transportation cost
-      sum{i in I, j1 in L1}D0_1[i,j1]*TC1[i,j1]*u0_1[i,j1] 
-    # + sum{i in I, j2 in L2}D0_2[i,j2]*TC1[i,j1]*u0_1[i,j1] 
-    + sum{j1 in L1, j2 in L2}D1_2[j1,j2]*TC2[j1,j2]*u1_2[j1,j2]  
-    + sum{j2 in L2, j3 in L3}D2_3[j2,j3]*TC3[j2,j3]*u2_3[j2,j3] 
-
+      sum{i in I, j1 in L1}TC0_1[i,j1]*u0_1[i,j1] 
+    + sum{i in I, j2 in L2}TC0_2[i,j2]*u0_2[i,j2] 
+    + sum{i in I, j3 in L3}TC0_3[i,j3]*u0_3[i,j3]     
+    + sum{j1 in L1, j2 in L2}TC1_2[j1,j2]*u1_2[j1,j2]  
+    + sum{j1 in L1, j3 in L3}TC1_3[j1,j3]*u1_3[j1,j3]  
+    + sum{j2 in L2, j3 in L3}TC2_3[j2,j3]*u2_3[j2,j3] 
     # Cost of existing units
     + sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] 
     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] 
@@ -709,18 +719,18 @@ minimize Total_Costs:
     + sum{e2 in E[2], j2 in L2}10*CE2[e2]*deficit2[e2,j2] 
     + sum{e3 in E[3], j3 in L3}10*CE3[e3]*deficit3[e3,j3] 
     # Variable cost per patient
-    + sum{j1 in L1}VC1[j1]*(sum{i in I}u0_1[i,j1]                   # Home → L1
+    + sum{j1 in L1}VC1[j1]*(sum{i in I}u0_1[i,j1]  # Home → L1
     + sum{j2 in L2}u2_1[j2,j1]              # L2 → L1
     + sum{j3 in L3}u3_1[j3,j1]              # L3 → L1
     + sum{i in I} ut1[i,j1])                # Telehealth in L1
-    + sum{j2 in L2}VC2[j2]*(sum{i in I}u0_2[i,j2] 
-    + sum{j1 in L1}u1_2[j1,j2] 
-    + sum{j3 in L3}u3_2[j3,j2]
-    + sum{i in I} ut2[i,j2])
-    + sum{j3 in L3}VC3[j3]*(sum{i in I} u0_3[i,j3] 
-    + sum{j1 in L1}u1_3[j1,j3] 
-    + sum{j2 in L2}u2_3[j2,j3]
-    + sum{i in I} ut3[i,j3])
+    + sum{j2 in L2}VC2[j2]*(sum{i in I}u0_2[i,j2] # Home → L2
+    + sum{j1 in L1}u1_2[j1,j2]              # L1 → L2
+    + sum{j3 in L3}u3_2[j3,j2]              # L3 → L2
+    + sum{i in I} ut2[i,j2])                # Telehealth in L2
+    + sum{j3 in L3}VC3[j3]*(sum{i in I} u0_3[i,j3] # Home → L3
+    + sum{j1 in L1}u1_3[j1,j3]              # L1 → L3
+    + sum{j2 in L2}u2_3[j2,j3]              # L2 → L2
+    + sum{i in I} ut3[i,j3])                # Telehealth in L3
     ;
 
 solve;
@@ -732,17 +742,20 @@ printf: "\n========================================\n";
 printf: "Health Care Plan with Team Reallocation\n";
 printf: "========================================\n";
 printf: "Logist cost:\t\t$%10.2f\n", 
-      sum{i in I, j1 in L1}D0_1[i,j1]*TC1[i,j1]*u0_1[i,j1] 
-    + sum{j1 in L1, j2 in L2}D1_2[j1,j2]*TC2[j1,j2]*u1_2[j1,j2]  
-    + sum{j2 in L2, j3 in L3}D2_3[j2,j3]*TC3[j2,j3]*u2_3[j2,j3];
-printf: "Fixed cost [E]:\t\t$%10.2f\n", 
+      sum{i in I, j1 in L1}TC0_1[i,j1]*u0_1[i,j1] 
+    + sum{i in I, j2 in L2}TC0_2[i,j2]*u0_2[i,j2] 
+    + sum{i in I, j3 in L3}TC0_3[i,j3]*u0_3[i,j3]     
+    + sum{j1 in L1, j2 in L2}TC1_2[j1,j2]*u1_2[j1,j2]  
+    + sum{j1 in L1, j3 in L3}TC1_3[j1,j3]*u1_3[j1,j3]  
+    + sum{j2 in L2, j3 in L3}TC2_3[j2,j3]*u2_3[j2,j3];
+printf: "Fixed cost [Existing]:\t$%10.2f\n", 
       sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] 
     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] 
     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3];
-printf: "Fixed cost [C]:\t\t$%10.2f\n", 
-      sum{j1 in CL[1] inter L1}FC1[j1]*y1[j1] 
-    + sum{j2 in CL[2] inter L2}FC2[j2]*y2[j2] 
-    + sum{j3 in CL[3] inter L3}FC3[j3]*y3[j3];
+printf: "Fixed cost [Candidate]:\t$%10.2f\n", 
+      sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
+    + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
+    + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3];
 printf: "New team cost:\t\t$%10.2f\n", 
       sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
     + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
