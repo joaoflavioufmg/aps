@@ -54,6 +54,7 @@ eSB # Equipe de Saúde Bucal
 eMU # Equipe Multi
 ;
 
+
 # Intermediate health care units teams (SHC)
 set E[2] :=
 ME2 # Clinical physician
@@ -97,6 +98,7 @@ eSF 10
 eSB 10
 eMU 10
 ;
+
 
 # Team cost K2 ($/year)
 param CE2:=
@@ -186,51 +188,51 @@ DE3 30
 # ;						
 
 
-# Travel cost/ patients h, from PHC i to IHC j
-param TC1 
-:	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6 PHC7 PHC8 PHC9 PHC10:=
-1	1	1	1	1	1	1	1	1	1	1	
-2	1	1	1	1	1	1	1	1	1	1	
-3	1	1	1	1	1	1	1	1	1	1	
-4	1	1	1	1	1	1	1	1	1	1	
-5	1	1	1	1	1	1	1	1	1	1	
-6	1	1	1	1	1	1	1	1	1	1	
-7	1	1	1	1	1	1	1	1	1	1	
-8	1	1	1	1	1	1	1	1	1	1	
-9	1	1	1	1	1	1	1	1	1	1	
-10	1	1	1	1	1	1	1	1	1	1	
-11	1	1	1	1	1	1	1	1	1	1	
-12	1	1	1	1	1	1	1	1	1	1	
-13	1	1	1	1	1	1	1	1	1	1	
-14	1	1	1	1	1	1	1	1	1	1	
-15	1	1	1	1	1	1	1	1	1	1	
-;
+# # Travel cost/ patients h, from PHC i to IHC j
+# param TC1 
+# :	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6 PHC7 PHC8 PHC9 PHC10:=
+# 1	1	1	1	1	1	1	1	1	1	1	
+# 2	1	1	1	1	1	1	1	1	1	1	
+# 3	1	1	1	1	1	1	1	1	1	1	
+# 4	1	1	1	1	1	1	1	1	1	1	
+# 5	1	1	1	1	1	1	1	1	1	1	
+# 6	1	1	1	1	1	1	1	1	1	1	
+# 7	1	1	1	1	1	1	1	1	1	1	
+# 8	1	1	1	1	1	1	1	1	1	1	
+# 9	1	1	1	1	1	1	1	1	1	1	
+# 10	1	1	1	1	1	1	1	1	1	1	
+# 11	1	1	1	1	1	1	1	1	1	1	
+# 12	1	1	1	1	1	1	1	1	1	1	
+# 13	1	1	1	1	1	1	1	1	1	1	
+# 14	1	1	1	1	1	1	1	1	1	1	
+# 15	1	1	1	1	1	1	1	1	1	1	
+# ;
 
-param TC2 
-:	SHC1 SHC2 SHC3 SHC4 SHC5 SHC6 SHC7 SHC8:=
-PHC1	1	1	1	1	1	1	1	1	
-PHC2	1	1	1	1	1	1	1	1	
-PHC3	1	1	1	1	1	1	1	1	
-PHC4	1	1	1	1	1	1	1	1	
-PHC5	1	1	1	1	1	1	1	1	
-PHC6	1	1	1	1	1	1	1	1	
-PHC7	1	1	1	1	1	1	1	1	
-PHC8	1	1	1	1	1	1	1	1	
-PHC9	1	1	1	1	1	1	1	1	
-PHC10	1	1	1	1	1	1	1	1	
-;
+# param TC2 
+# :	SHC1 SHC2 SHC3 SHC4 SHC5 SHC6 SHC7 SHC8:=
+# PHC1	1	1	1	1	1	1	1	1	
+# PHC2	1	1	1	1	1	1	1	1	
+# PHC3	1	1	1	1	1	1	1	1	
+# PHC4	1	1	1	1	1	1	1	1	
+# PHC5	1	1	1	1	1	1	1	1	
+# PHC6	1	1	1	1	1	1	1	1	
+# PHC7	1	1	1	1	1	1	1	1	
+# PHC8	1	1	1	1	1	1	1	1	
+# PHC9	1	1	1	1	1	1	1	1	
+# PHC10	1	1	1	1	1	1	1	1	
+# ;
 
-param TC3 
-:	THC1 THC2 THC3 THC4 THC5 THC6:=
-SHC1	1	1	1	1	1	1	
-SHC2	1	1	1	1	1	1	
-SHC3	1	1	1	1	1	1	
-SHC4	1	1	1	1	1	1	
-SHC5	1	1	1	1	1	1	
-SHC6	1	1	1	1	1	1	
-SHC7	1	1	1	1	1	1	
-SHC8	1	1	1	1	1	1	
-;
+# param TC3 
+# :	THC1 THC2 THC3 THC4 THC5 THC6:=
+# SHC1	1	1	1	1	1	1	
+# SHC2	1	1	1	1	1	1	
+# SHC3	1	1	1	1	1	1	
+# SHC4	1	1	1	1	1	1	
+# SHC5	1	1	1	1	1	1	
+# SHC6	1	1	1	1	1	1	
+# SHC7	1	1	1	1	1	1	
+# SHC8	1	1	1	1	1	1	
+# ;
 
 # Variable cost of IHC j / patient 
 param VC1:=  
@@ -359,7 +361,7 @@ param W:=
 # param MS1:=
 # eSF	2e-3 
 # eSB 2e-3
-# eMU 2e-3
+# eMU 2e-3/9
 # ; 
 
 param MS2:=
@@ -397,22 +399,22 @@ DE3 2	2	2
 
 # The capacity of a level-1 PCF in K.
 param C1:=
-PHC1    1000
-PHC2    2000
-PHC3    2000
-PHC4    2000
-PHC5    2000
-PHC6    2000
-PHC7    2000
-PHC8    1000
-PHC9    1000
-PHC10   1000
+PHC1    500
+PHC2    500
+PHC3    500
+PHC4    500
+PHC5    500
+PHC6    500
+PHC7    500
+PHC8    500
+PHC9    500
+PHC10   500
 ;											
 
 param C2:=
-SHC1	1000
-SHC2	300
-SHC3	300
+SHC1	200
+SHC2	200
+SHC3	200
 SHC4	200
 SHC5	200
 SHC6	200
@@ -421,12 +423,12 @@ SHC8	200
 ;
 
 param C3:=	
-THC1	600
-THC2	600
-THC3	300
-THC4	300
-THC5	300
-THC6	300
+THC1	100
+THC2	100
+THC3	100
+THC4	100
+THC5	100
+THC6	100
 ;	
 
 # The number of alevel-k to be established.
