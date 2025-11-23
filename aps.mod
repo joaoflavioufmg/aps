@@ -135,15 +135,51 @@ param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0);
 # ############################################################################### 
 
 param W{I}; # The population size at demand point i (pop)
+param IVS{I}; # Índice de Vulnerabildade em Saude at demand point i (pop)
+
+
+# COUNT how many IVS[i] <= IVS[j] for each j
+# param COUNT_IVS{j in I} := sum{i in I} (IVS[i] <= IVS[j]);
+param COUNT_IVS{j in I} := sum{i in I} (if IVS[i] <= IVS[j] then 1 else 0);
+
+# Select thresholds as the smallest IVS[j] reaching each rank
+# ranks for 33%, 66%, 100%
+param LOW_IVS := min{j in I : COUNT_IVS[j] >= ceil(card(I) * 0.33) } IVS[j];
+param MED_IVS := min{j in I : COUNT_IVS[j] >= ceil(card(I) * 0.66) } IVS[j];
+param HIG_IVS := min{j in I : COUNT_IVS[j] >= card(I) } IVS[j];
+
+# (prof/pop)
+param PROF_POP{i in I} := 
+    if IVS[i] <= LOW_IVS then 1/2500
+        else if IVS[i] <= MED_IVS then 1/3000
+        else if IVS[i] <= HIG_IVS then 1/3500
+        else "ERROR";
+    # if IVS[i] <= LOW_IVS then W[i]/2500
+    # else if IVS[i] <= MED_IVS then W[i]/3000
+    # else if IVS[i] <= HIG_IVS then W[i]/3500
+    # else "ERROR";
+
+# # display results
+display LOW_IVS, MED_IVS, HIG_IVS;
+# display {i in I} i, IVS[i], W[i], PROF_POP[i];
+
+param PROP{e1 in E[1]} :=
+    if e1 = "eSF" then 1
+    else if e1 = "eSB" then 1
+    else if e1 = "eMU" then 1/9
+    else 0;
 
 # Ministry of Health parameter for requirements PHC (prof/pop)
-param MS1{e1 in E[1]}:= if e1 = 'eSF' then 2e-2 else
-                        if e1 = 'eSB' then 2e-2 else
-                        if e1 = 'eMU' then 2e-2/9; 
+param MS0_1{i in I, e1 in E[1]} := PROP[e1] * PROF_POP[i];
+# display MS0_1;
 
-# # Proportionality parameter for eMU
-# param RATIO_eSF_eMU := 9;  # 9 eSF per 1 eMU
+# param MS1{e1 in E[1]}:= if e1 = 'eSF' then 2e-2 else
+#                         if e1 = 'eSB' then 2e-2 else
+#                         if e1 = 'eMU' then 2e-2/9; 
 
+# (prof/patient)
+param PROF_PAT := 1/3000;
+param MS1{e1 in E[1]} := PROP[e1] * PROF_PAT;
 param MS2{E[2]}; # Ministry of Health parameter for requirements SHC (prof/pop)
 param MS3{E[3]}; # Ministry of Health parameter for requirements THC (prof/pop)
 
@@ -180,6 +216,16 @@ check {j2 in L[2]}: O2_0[j2] + O2_1[j2] + O2_3[j2] <= 1;
 check {j2 in L[2]}: O2_0[j2] + O2_1[j2] + O2_3[j2] >= 0.9;
 check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] <= 1;
 check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] >= 0.9;
+
+# Percentual maximo de Atendimentos Telemedicina de casa > PHC, SHC, THC
+param MAX_TELE_PHC, <= 1.0;
+param MAX_TELE_SHC, <= 1.0;
+param MAX_TELE_THC, <= 1.0;
+
+# Percentual maximo de deslocamentos Casa > PHC, SHC, THC 
+param MAX_HOME_PHC, <= 1.0;
+param MAX_HOME_SHC, <= 1.0;
+param MAX_HOME_THC, <= 1.0;
 
 ################################################
 # BUDGET PREPROCESSING
@@ -310,14 +356,14 @@ s.t. R0f{i in I, j2 in L2}: W[i]*y0_2[i,j2] = u0_2[i,j2] + ut2[i,j2];
 s.t. R0g{i in I, j3 in L3}: W[i]*y0_3[i,j3] = u0_3[i,j3] + ut3[i,j3];
 
 # Percentual maximo de Atendimentos Telemedicina de casa > PHC, SHC, THC
-s.t. R0h{i in I, j1 in L1}: ut1[i,j1] <= 0.05 * u0_1[i,j1];
-s.t. R0i{i in I, j2 in L2}: ut2[i,j2] <= 0.05 * u0_2[i,j2];
-s.t. R0j{i in I, j3 in L3}: ut3[i,j3] <= 0.05 * u0_3[i,j3];
+s.t. R0h{i in I, j1 in L1}: ut1[i,j1] <= MAX_TELE_PHC * u0_1[i,j1];
+s.t. R0i{i in I, j2 in L2}: ut2[i,j2] <= MAX_TELE_SHC * u0_2[i,j2];
+s.t. R0j{i in I, j3 in L3}: ut3[i,j3] <= MAX_TELE_THC * u0_3[i,j3];
 
 # Percentual maximo de deslocamentos Casa > PHC, SHC, THC 
-s.t. R0k{i in I, j1 in L1}: u0_1[i,j1] <= W[i];
-s.t. R0l{i in I, j2 in L2}: u0_2[i,j2] <= 0.15 * W[i];
-s.t. R0m{i in I, j3 in L3}: u0_3[i,j3] <= 0.05 * W[i];
+s.t. R0k{i in I, j1 in L1}: u0_1[i,j1] <= MAX_HOME_PHC * W[i];
+s.t. R0l{i in I, j2 in L2}: u0_2[i,j2] <= MAX_HOME_SHC * W[i];
+s.t. R0m{i in I, j3 in L3}: u0_3[i,j3] <= MAX_HOME_THC * W[i];
 
 # Balanceamento da demanda na origem i (todas as saídas = W[i])
 # (Somam-se todos os tipos de saída do domicílio: presencial para L1/L2/L3 
@@ -457,15 +503,20 @@ s.t. R3c{j3 in L3}:
 s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
     CNES1[e1,j1]  # Existing teams
     # Required teams based on patient flow
-    - (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[e1]  
+    # - (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1] 
+    # - sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1] 
+    - (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
     + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
     + newhire1[e1,j1]  # New teams hired
     = surplus1[e1,j1] - deficit1[e1,j1];
 
+
 # For CANDIDATE locations: only new hires and transfers IN
 s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
-    - (sum{i in I}u0_1[i,j1]+ sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[e1]  # Required teams
+    # - (sum{i in I}u0_1[i,j1]+ sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1]  # Required teams
+    # - sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1]
+    - (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
     + sum{from in EL[1] inter L1}transfer1[e1,from,j1]  # Transfers IN
     + newhire1[e1,j1]  # New hires
     = deficit1[e1,j1];
@@ -876,7 +927,9 @@ for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
             e1,
             if j1 in EL[1] then CNES1[e1,j1] else 0,
             # sum{i in I}u0_1[i,j1]*MS1[e1],
-            (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[e1],
+            # (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1],
+            # sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1],
+            (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1]),
             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
             newhire1[e1,j1],
@@ -884,6 +937,23 @@ for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
             deficit1[e1,j1];
     }
 }
+
+param Req{j1 in L1, e1 in E[1]} :=
+    (sum{i in I} (u0_1[i,j1] + ut1[i,j1]) * MS0_1[i,e1])
+  + (sum{j2 in L2} u2_1[j2,j1] * MS1[e1])
+  + (sum{j3 in L3} u3_1[j3,j1] * MS1[e1]);
+
+param ReqTotal{e1 in E[1]} :=
+    sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Req[j1,e1];
+
+printf: "\n======================================================================\n";
+printf: "FINAL TOTAL REQUIRED TEAMS PER CATEGORY\n";
+printf: "======================================================================\n";
+
+for{e1 in E[1]}{
+    printf: "%-4s: %.2f teams\n", e1, ReqTotal[e1];
+}
+printf: "======================================================================\n";
 
 # # Print eMU summary first (global)
 # printf: "[GLOBAL]\t%-4s*\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
@@ -1067,39 +1137,39 @@ printf: "========================================\n";
 printf{j1 in EL[1] inter L1}: 
 "[%-5s]:\t%d\t%d\t%3d%%\n", j1,  
 C1[j1], 
-sum{i in I}u0_1[i,j1],
-if C1[j1] > 0 then ((sum{i in I}u0_1[i,j1])/(C1[j1]))*100 else 0;
-printf{j1 in CL[1] inter L1: sum{i in I}u0_1[i,j1]>0}: 
+(sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1]),
+if C1[j1] > 0 then ((sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])/(C1[j1]))*100 else 0;
+printf{j1 in CL[1] inter L1: (sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])>0}: 
 "[%-5s*]:\t%d\t%d\t%3d%%\n", j1, 
 C1[j1], 
-sum{i in I}u0_1[i,j1],
-if C1[j1] > 0 then ((sum{i in I}u0_1[i,j1])/(C1[j1]))*100 else 0;
+(sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1]),
+if C1[j1] > 0 then ((sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])/(C1[j1]))*100 else 0;
 
 printf: "========================================\n";
 printf: "SHC     :\tCapty\tMet\tUse(%%)\n";
 printf: "========================================\n";
 printf{j2 in EL[2] inter L2}: "[%-6s]:\t%d\t%d\t%3d%%\n", j2, 
 C2[j2], 
-sum{j1 in L1}u1_2[j1,j2],
-if C2[j2] > 0 then ((sum{j1 in L1}u1_2[j1,j2])/(C2[j2]))*100 else 0;
-printf{j2 in CL[2] inter L2: sum{j1 in L1}u1_2[j1,j2]>0}: 
+(sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]),
+if C2[j2] > 0 then ((sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])/(C2[j2]))*100 else 0;
+printf{j2 in CL[2] inter L2: (sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])>0}: 
 "[%-5s*]:\t%d\t%d\t%3d%%\n", j2, 
 C2[j2], 
-sum{j1 in L1}u1_2[j1,j2],
-if C2[j2] > 0 then ((sum{j1 in L1}u1_2[j1,j2])/(C2[j2]))*100 else 0;
+(sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]),
+if C2[j2] > 0 then ((sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])/(C2[j2]))*100 else 0;
 
 printf: "========================================\n";
 printf: "THC     :\tCapty\tMet\tUse(%%)\n";
 printf: "========================================\n";
 printf{j3 in EL[3] inter L3}: "[%-6s]:\t%d\t%d\t%3d%%\n", j3, 
 C3[j3], 
-sum{j2 in L2}u2_3[j2,j3],
-if C3[j3] > 0 then ((sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
-printf{j3 in CL[3] inter L3: sum{j2 in L2}u2_3[j2,j3]>0}: 
+(sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]),
+if C3[j3] > 0 then ((sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
+printf{j3 in CL[3] inter L3: (sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])>0}: 
 "[%-5s*]:\t%d\t%d\t%3d%%\n", j3, 
 C3[j3], 
-sum{j2 in L2}u2_3[j2,j3],
-if C3[j3] > 0 then ((sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
+(sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]),
+if C3[j3] > 0 then ((sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
 printf: "========================================\n\n";
 
 # display{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,from,to] > 0} transfer1[e1,from,to];
@@ -1130,6 +1200,6 @@ printf: "===========================================================\n";
 # display{j2 in L2, i in I: u2_0[j2,i]>0}: u2_0[j2,i];
 # display{j3 in L3, i in I: u3_0[j3,i]>0}: u3_0[j3,i];
 
-
+display y3;
 end;
 
