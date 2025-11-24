@@ -160,7 +160,8 @@ param PROF_POP{i in I} :=
     # else "ERROR";
 
 # # display results
-display LOW_IVS, MED_IVS, HIG_IVS;
+# display LOW_IVS, MED_IVS, HIG_IVS;
+
 # display {i in I} i, IVS[i], W[i], PROF_POP[i];
 
 param PROP{e1 in E[1]} :=
@@ -180,8 +181,8 @@ param MS0_1{i in I, e1 in E[1]} := PROP[e1] * PROF_POP[i];
 # (prof/patient)
 param PROF_PAT := 1/3000;
 param MS1{e1 in E[1]} := PROP[e1] * PROF_PAT;
-param MS2{E[2]}; # Ministry of Health parameter for requirements SHC (prof/pop)
-param MS3{E[3]}; # Ministry of Health parameter for requirements THC (prof/pop)
+param MS2{E[2]} := 1/3000; # Ministry of Health parameter for requirements SHC (prof/pop)
+param MS3{E[3]} := 1/3000; # Ministry of Health parameter for requirements THC (prof/pop)
 
 param CNES1{E[1],EL[1]}; # Health professional teams PHC at location L1 (prof)
 param CNES2{E[2],EL[2]}; # Health professional teams PHC at location L2 (prof)
@@ -210,12 +211,14 @@ param O3_0{L[3]}; # The proportion of patients in a L-3 to home i TCF. (%)
 param O3_1{L[3]}; # The proportion of patients in a L-3 to a L-1 TCF. (%)
 param O3_2{L[3]}; # The proportion of patients in a L-3 to a L-2 TCF. (%)
 
-check {j1 in L[1]}: O1_0[j1] + O1_2[j1] + O1_3[j1] <= 1;
-check {j1 in L[1]}: O1_0[j1] + O1_2[j1] + O1_3[j1] >= 0.9;
-check {j2 in L[2]}: O2_0[j2] + O2_1[j2] + O2_3[j2] <= 1;
-check {j2 in L[2]}: O2_0[j2] + O2_1[j2] + O2_3[j2] >= 0.9;
-check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] <= 1;
-check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] >= 0.9;
+
+# # FOR GLPK, only
+# check {j1 in L[1]}: O1_0[j1] + O1_2[j1] + O1_3[j1] <= 1;
+# check {j1 in L[1]}: O1_0[j1] + O1_2[j1] + O1_3[j1] >= 0.9;
+# check {j2 in L[2]}: O2_0[j2] + O2_1[j2] + O2_3[j2] <= 1;
+# check {j2 in L[2]}: O2_0[j2] + O2_1[j2] + O2_3[j2] >= 0.9;
+# check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] <= 1;
+# check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] >= 0.9;
 
 # Percentual maximo de Atendimentos Telemedicina de casa > PHC, SHC, THC
 param MAX_TELE_PHC, <= 1.0;
@@ -250,24 +253,26 @@ param MaxNewSHC := if card(CL[2] inter L2) > 0 and MinCostPerNewSHC > 0 then
 param MaxNewTHC := if card(CL[3] inter L3) > 0 and MinCostPerNewTHC > 0 then 
                    min(U[3], floor(AvailableBudget / MinCostPerNewTHC)) else 0;
 
-printf: "\n========================================\n";
-printf: "BUDGET PREPROCESSING\n";
-printf: "========================================\n";
-printf: "Overall Budget:\t\t$%10.2f\n", BUDGET;
-printf: "Existing Cost:\t\t$%10.2f\n", ExistingCost;
-printf: "Available Budget:\t$%10.2f\n", AvailableBudget;
-printf: "========================================\n";
-printf: "Min Cost per New Facility:\n";
-printf: "  PHC:\t\t\t$%10.2f\n", MinCostPerNewPHC;
-printf: "  SHC:\t\t\t$%10.2f\n", MinCostPerNewSHC;
-printf: "  THC:\t\t\t$%10.2f\n", MinCostPerNewTHC;
-printf: "========================================\n";
-printf: "Budget-Adjusted Max New Units:\n";
-printf: "  PHC:\t\t\t%d (original: %d)\n", MaxNewPHC, U[1];
-printf: "  SHC:\t\t\t%d (original: %d)\n", MaxNewSHC, U[2];
-printf: "  THC:\t\t\t%d (original: %d)\n", MaxNewTHC, U[3];
-printf: "========================================\n\n";
+# #  For GLPK, only
+# printf: "\n========================================\n";
+# printf: "BUDGET PREPROCESSING\n";
+# printf: "========================================\n";
+# printf: "Overall Budget:\t\t$%10.2f\n", BUDGET;
+# printf: "Existing Cost:\t\t$%10.2f\n", ExistingCost;
+# printf: "Available Budget:\t$%10.2f\n", AvailableBudget;
+# printf: "========================================\n";
+# printf: "Min Cost per New Facility:\n";
+# printf: "  PHC:\t\t\t$%10.2f\n", MinCostPerNewPHC;
+# printf: "  SHC:\t\t\t$%10.2f\n", MinCostPerNewSHC;
+# printf: "  THC:\t\t\t$%10.2f\n", MinCostPerNewTHC;
+# printf: "========================================\n";
+# printf: "Budget-Adjusted Max New Units:\n";
+# printf: "  PHC:\t\t\t%d (original: %d)\n", MaxNewPHC, U[1];
+# printf: "  SHC:\t\t\t%d (original: %d)\n", MaxNewSHC, U[2];
+# printf: "  THC:\t\t\t%d (original: %d)\n", MaxNewTHC, U[3];
+# printf: "========================================\n\n";
 
+param M:= 10000000000;
 #################################################
 # DECISION VARIABLES
 #################################################
@@ -319,10 +324,34 @@ var transfer1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, integer
 var transfer2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, integer, >= 0;
 var transfer3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, integer, >= 0;
 
+var t1_int{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, >= 0;
+var t2_int{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, >= 0;
+var t3_int{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, >= 0;
+
+var f1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, >=0, <= 0.999;
+var f2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, >=0, <= 0.999;
+var f3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, >=0, <= 0.999;
+
+s.t. T1_aux{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}: transfer1[e1,from,to] = t1_int[e1,from,to] + f1[e1,from,to];
+s.t. T2_aux{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}: transfer2[e2,from,to] = t2_int[e2,from,to] + f2[e2,from,to];
+s.t. T3_aux{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}: transfer3[e3,from,to] = t3_int[e3,from,to] + f3[e3,from,to];
+
 # New teams hired (only for candidate locations or to cover remaining deficits)
 var newhire1{E[1],L1}, integer, >= 0; # New professionals hired at L1 (prof)
 var newhire2{E[2],L2}, integer, >= 0; # New professionals hired at L2 (prof)
 var newhire3{E[3],L3}, integer, >= 0; # New professionals hired at L3 (prof)
+
+var nh1_int{E[1],L1}, >=0;
+var nh2_int{E[2],L2}, >=0;
+var nh3_int{E[3],L3}, >=0;
+
+var f4{E[1],L1}, >=0, <= 0.999;
+var f5{E[2],L2}, >=0, <= 0.999;
+var f6{E[3],L3}, >=0, <= 0.999;
+
+s.t. T4_aux{e1 in E[1], j1 in L1}: newhire1[e1,j1] = nh1_int[e1,j1] + f4[e1,j1];
+s.t. T5_aux{e2 in E[2], j2 in L2}: newhire2[e2,j2] = nh2_int[e2,j2] + f5[e2,j2];
+s.t. T6_aux{e3 in E[3], j3 in L3}: newhire3[e3,j3] = nh3_int[e3,j3] + f6[e3,j3];
 
 var Total_Costs_APS, >=0; # Aux variable for report
 
@@ -719,16 +748,25 @@ minimize Total_Costs:
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]    
     # Cost of NEW teams hired
-    + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
-    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+    # + sum{j1 in L1, c1 in E[1]}(CE1[c1]*newhire1[c1,j1] + M*f4[c1,j1])
+    # + sum{j2 in L2, c2 in E[2]}(CE2[c2]*newhire2[c2,j2] + M*f5[c2,j2])
+    # + sum{j3 in L3, c3 in E[3]}(CE3[c3]*newhire3[c3,j3] + M*f6[c3,j3])
+    + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1]
+    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2]
     + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
     # Team relocation costs
     + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-         RC1[e1]*DL1[from,to]*transfer1[e1,from,to]
+        #  (RC1[e1]*DL1[from,to]*transfer1[e1,from,to] + M*f1[e1,from,to])
+        RC1[e1]*DL1[from,to]*transfer1[e1,from,to]
+    
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-         RC2[e2]*DL2[from,to]*transfer2[e2,from,to]
+        #  (RC2[e2]*DL2[from,to]*transfer2[e2,from,to] + M*f2[e2,from,to])
+        RC2[e2]*DL2[from,to]*transfer2[e2,from,to]
+    
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*DL3[from,to]*transfer3[e3,from,to]    
+        #  (RC3[e3]*DL3[from,to]*transfer3[e3,from,to] + M*f3[e3,from,to])
+        RC3[e3]*DL3[from,to]*transfer3[e3,from,to]
+
     # Penalty for surplus or deficit
     + sum{e1 in E[1], j1 in EL[1]}10*CE1[e1]*surplus1[e1,j1] 
     + sum{e2 in E[2], j2 in EL[2]}10*CE2[e2]*surplus2[e2,j2] 
@@ -748,415 +786,422 @@ minimize Total_Costs:
     + sum{j3 in L3}VC3[j3]*(sum{i in I} u0_3[i,j3] # Home → L3
     + sum{j1 in L1}u1_3[j1,j3]              # L1 → L3
     + sum{j2 in L2}u2_3[j2,j3]              # L2 → L2
-    + sum{i in I} ut3[i,j3])                # Telehealth in L3
+    + sum{i in I} ut3[i,j3])                # Telehealth in L3    
     ;
 
-solve;
-#################################################
-# OUTPUT REPORTS
-#################################################
-
-printf: "\n========================================\n";
-printf: "Health Care Plan with Team Reallocation\n";
-printf: "========================================\n";
-printf: "Logist cost:\t\t$%10.2f\n", 
-      sum{i in I, j1 in L1}TC0_1[i,j1]*u0_1[i,j1] 
-    + sum{i in I, j2 in L2}TC0_2[i,j2]*u0_2[i,j2] 
-    + sum{i in I, j3 in L3}TC0_3[i,j3]*u0_3[i,j3]     
-    + sum{j1 in L1, j2 in L2}TC1_2[j1,j2]*u1_2[j1,j2]  
-    + sum{j1 in L1, j3 in L3}TC1_3[j1,j3]*u1_3[j1,j3]  
-    + sum{j2 in L2, j3 in L3}TC2_3[j2,j3]*u2_3[j2,j3];
-printf: "Fixed cost [Existing]:\t$%10.2f\n", 
-      sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] 
-    + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] 
-    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3];
-printf: "Fixed cost [Candidate]:\t$%10.2f\n", 
-      sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
-    + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
-    + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3];
-printf: "New team cost:\t\t$%10.2f\n", 
-      sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
-    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
-    + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3];
-printf: "Team relocation cost:\t$%10.2f\n",
-      sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-         RC1[e1]*DL1[from,to]*transfer1[e1,from,to]
-    + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-         RC2[e2]*DL2[from,to]*transfer2[e2,from,to]
-    + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*DL3[from,to]*transfer3[e3,from,to];
-printf: "Variable Cost:\t\t$%10.2f\n", 
-      sum{i in I, j1 in L1}VC1[j1]*u0_1[i,j1] 
-    + sum{j1 in L1, j2 in L2}VC2[j2]*u1_2[j1,j2]  
-    + sum{j2 in L2, j3 in L3}VC3[j3]*u2_3[j2,j3];
-printf: "========================================\n";
-printf: "Total     Cost:\t\t$%10.2f\n", Total_Costs;
-printf: "Total APS Cost:\t\t$%10.2f\n", Total_Costs_APS;
-printf: "Budget Limit:\t\t$%10.2f\n", BUDGET;
-printf: "Budget Usage:\t\t%.2f%%\n", (Total_Costs_APS/BUDGET)*100;
-printf: "========================================\n";
-printf: "New Units:\tQty\tMax\tUse (%%)\n"; 
-printf: "========================================\n";
-printf: "PHC      :\t%d\t%d\t%.2f%%\n", 
-sum{j1 in CL[1] inter L1}y1[j1],
-MaxNewPHC, 
-if MaxNewPHC > 0 then ((sum{j1 in CL[1] inter L1}y1[j1])/(MaxNewPHC))*100 else 0; 
-printf: "SHC      :\t%d\t%d\t%.2f%%\n", 
-sum{j2 in CL[2] inter L2}y2[j2],
-MaxNewSHC, 
-if MaxNewSHC > 0 then ((sum{j2 in CL[2] inter L2}y2[j2])/(MaxNewSHC))*100 else 0; 
-printf: "THC      :\t%d\t%d\t%.2f%%\n", 
-sum{j3 in CL[3] inter L3}y3[j3],
-MaxNewTHC, 
-if MaxNewTHC > 0 then ((sum{j3 in CL[3] inter L3}y3[j3])/(MaxNewTHC))*100 else 0; 
-printf: "========================================\n";
-
-printf: "\n========================================\n";
-printf: "TEAM REALLOCATION SUMMARY\n";
-printf: "========================================\n";
-
-# PHC Team Transfers
-printf: "\nPHC Team Transfers:\n";
-printf: "From\t> To\t\tTeam\tQty\tDist\n";
-printf: "================================================\n";
-for{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,from,to] > 0.01}{
-    printf: "[%-4s]\t> [%-4s]\t%-4s\t%.2f\t%.0f\n", 
-        from, to, e1, transfer1[e1,from,to], DL1[from,to];
-}
-
-# SHC Team Transfers
-printf: "\nSHC Team Transfers:\n";
-printf: "From\t> To\t\tTeam\tQty\tDist\n";
-printf: "================================================\n";
-for{e2 in E[2], from in EL[2] inter L2, to in L2: from != to and transfer2[e2,from,to] > 0.01}{
-    printf: "[%-4s]\t> [%-4s]\t%-4s\t%.2f\t%.0f\n", 
-        from, to, e2, transfer2[e2,from,to], DL2[from,to];
-}
-
-# THC Team Transfers
-printf: "\nTHC Team Transfers:\n";
-printf: "From\t> To\t\tTeam\tQty\tDist\n";
-printf: "================================================\n";
-for{e3 in E[3], from in EL[3] inter L3, to in L3: from != to and transfer3[e3,from,to] > 0.01}{
-    printf: "[%-4s]\t> [%-4s]\t%-4s\t%.2f\t%.0f\n", 
-        from, to, e3, transfer3[e3,from,to], DL3[from,to];
-}
-
-printf: "\n================================================\n";
-printf: "NEW TEAMS HIRED\n";
-printf: "================================================\n";
-printf: "\nPHC New Hires:\n";
-printf: "Location\tTeam\tQty\n";
-printf: "================================================\n";
-for{j1 in L1, e1 in E[1]: newhire1[e1,j1] > 0.01}{
-    printf: "[%-5s]%s\t%-4s\t%.2f\n", 
-        j1, 
-        if j1 in CL[1] then "*" else " ",
-        e1, 
-        newhire1[e1,j1];
-}
-
-printf: "\nSHC New Hires:\n";
-printf: "Location\tTeam\tQty\n";
-printf: "================================================\n";
-for{j2 in L2, e2 in E[2]: newhire2[e2,j2] > 0.01}{
-    printf: "[%-5s]%s\t%-4s\t%.2f\n", 
-        j2,
-        if j2 in CL[2] then "*" else " ",
-        e2, 
-        newhire2[e2,j2];
-}
-
-printf: "\nTHC New Hires:\n";
-printf: "Location\tTeam\tQty\n";
-printf: "================================================\n";
-for{j3 in L3, e3 in E[3]: newhire3[e3,j3] > 0.01}{
-    printf: "[%-5s]%s\t%-4s\t%.2f\n", 
-        j3,
-        if j3 in CL[3] then "*" else " ",
-        e3, 
-        newhire3[e3,j3];
-}
-
-printf: "\n========================================\n";
-printf: "TEAM BALANCE PER LOCATION\n";
-printf: "========================================\n";
-
-printf: "\nPHC Locations:\n";
-printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
-printf: "===========================================================================\n";
-
-for{j1 in L1: (sum{i in I}(u0_1[i,j1]+ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1]+ sum{j3 in L3}u3_1[j3,j1]) > 0}{
-    for{e1 in E[1]}{
-        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
-            j1,
-            if j1 in CL[1] then "*" else " ",
-            e1,
-            if j1 in EL[1] then CNES1[e1,j1] else 0,
-            # sum{i in I}u0_1[i,j1]*MS1[e1],
-            # (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1],
-            # sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1],
-            (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1]),
-            sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
-            - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
-            newhire1[e1,j1],
-            (if j1 in EL[1] then CNES1[e1,j1] else 0) # Result: CNES +
-            + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
-            - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0) # Teams transferred OUT            
-            + newhire1[e1,j1],
-            if j1 in EL[1] then surplus1[e1,j1] else 0,
-            deficit1[e1,j1];
-    }
-}
-
-param Req{j1 in L1, e1 in E[1]} :=
-    (sum{i in I} (u0_1[i,j1] + ut1[i,j1]) * MS0_1[i,e1])
-  + (sum{j2 in L2} u2_1[j2,j1] * MS1[e1])
-  + (sum{j3 in L3} u3_1[j3,j1] * MS1[e1]);
-
-param ReqTotal{e1 in E[1]} :=
-    sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Req[j1,e1];
-
-param Result{j1 in L1, e1 in E[1]} :=
-    (if j1 in EL[1] then CNES1[e1,j1] else 0)
-  + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
-  - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
-  + newhire1[e1,j1];
-
-param ResultTotal{e1 in E[1]} :=
-    sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Result[j1,e1];
-
-printf: "===========================================================================\n";
-printf: "TOTAL TEAMS PER CATEGORY\n";
-printf: "===========================================================================\n";
-printf: "Team\tRequired\tResult\n";
-for{e1 in E[1]}{
-    printf: "%-4s\t%.2f\t\t%.2f\n",
-        e1,
-        ReqTotal[e1],
-        ResultTotal[e1];
-}
-printf: "===========================================================================\n";
+# ########################################################################
+# solve;
 
 
-printf: "\nSHC Locations:\n";
-printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
-printf: "===========================================================================\n";
-for{j2 in L2: (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]) > 0}{
-    for{e2 in E[2]}{
-        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
-            j2,
-            if j2 in CL[2] then "*" else " ",
-            e2,
-            if j2 in EL[2] then CNES2[e2,j2] else 0, #CNES
-            # sum{j1 in L1}u1_2[j1,j2]*MS2[e2],
-            (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])*MS2[e2],
-            sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
-            - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
-            newhire2[e2,j2],
-            (if j2 in EL[2] then CNES2[e2,j2] else 0) # CNES
-            + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
-            - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0) # Teams transferred OUT
-            + newhire2[e2,j2],
-            if j2 in EL[2] then surplus2[e2,j2] else 0,
-            deficit2[e2,j2];
-    }
-}
+# #################################################
+# # OUTPUT REPORTS
+# #################################################
 
-printf: "\nTHC Locations:\n";
-printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
-printf: "===========================================================================\n";
-for{j3 in L3: (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]) > 0}{
-    for{e3 in E[3]}{
-        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
-            j3,
-            if j3 in CL[3] then "*" else " ",
-            e3,
-            if j3 in EL[3] then CNES3[e3,j3] else 0,
-            # sum{j2 in L2}u2_3[j2,j3]*MS3[e3],
-            (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])*MS3[e3],
-            sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
-            - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
-            newhire3[e3,j3],
-            (if j3 in EL[3] then CNES3[e3,j3] else 0) # CNES
-            + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
-            - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0) # Teams transferred OUT
-            + newhire3[e3,j3],
-            if j3 in EL[3] then surplus3[e3,j3] else 0,
-            deficit3[e3,j3];
-    }
-}
+# printf: "\n========================================\n";
+# printf: "Health Care Plan with Team Reallocation\n";
+# printf: "========================================\n";
+# printf: "Logist cost:\t\t$%10.2f\n", 
+#       sum{i in I, j1 in L1}TC0_1[i,j1]*u0_1[i,j1] 
+#     + sum{i in I, j2 in L2}TC0_2[i,j2]*u0_2[i,j2] 
+#     + sum{i in I, j3 in L3}TC0_3[i,j3]*u0_3[i,j3]     
+#     + sum{j1 in L1, j2 in L2}TC1_2[j1,j2]*u1_2[j1,j2]  
+#     + sum{j1 in L1, j3 in L3}TC1_3[j1,j3]*u1_3[j1,j3]  
+#     + sum{j2 in L2, j3 in L3}TC2_3[j2,j3]*u2_3[j2,j3];
+# printf: "Fixed cost [Existing]:\t$%10.2f\n", 
+#       sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] 
+#     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] 
+#     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3];
+# printf: "Fixed cost [Candidate]:\t$%10.2f\n", 
+#       sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
+#     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
+#     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3];
+# printf: "New team cost:\t\t$%10.2f\n", 
+#       sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+#     + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+#     + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3];
+# printf: "Team relocation cost:\t$%10.2f\n",
+#       sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
+#          RC1[e1]*DL1[from,to]*transfer1[e1,from,to]
+#     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
+#          RC2[e2]*DL2[from,to]*transfer2[e2,from,to]
+#     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
+#          RC3[e3]*DL3[from,to]*transfer3[e3,from,to];
+# printf: "Variable Cost:\t\t$%10.2f\n", 
+#       sum{i in I, j1 in L1}VC1[j1]*u0_1[i,j1] 
+#     + sum{j1 in L1, j2 in L2}VC2[j2]*u1_2[j1,j2]  
+#     + sum{j2 in L2, j3 in L3}VC3[j3]*u2_3[j2,j3];
+# printf: "========================================\n";
+# printf: "Total     Cost:\t\t$%10.2f\n", Total_Costs;
+# printf: "Total APS Cost:\t\t$%10.2f\n", Total_Costs_APS;
+# printf: "Budget Limit:\t\t$%10.2f\n", BUDGET;
+# printf: "Budget Usage:\t\t%.2f%%\n", (Total_Costs_APS/BUDGET)*100;
+# printf: "========================================\n";
+# printf: "New Units:\tQty\tMax\tUse (%%)\n"; 
+# printf: "========================================\n";
+# printf: "PHC      :\t%d\t%d\t%.2f%%\n", 
+# sum{j1 in CL[1] inter L1}y1[j1],
+# MaxNewPHC, 
+# if MaxNewPHC > 0 then ((sum{j1 in CL[1] inter L1}y1[j1])/(MaxNewPHC))*100 else 0; 
+# printf: "SHC      :\t%d\t%d\t%.2f%%\n", 
+# sum{j2 in CL[2] inter L2}y2[j2],
+# MaxNewSHC, 
+# if MaxNewSHC > 0 then ((sum{j2 in CL[2] inter L2}y2[j2])/(MaxNewSHC))*100 else 0; 
+# printf: "THC      :\t%d\t%d\t%.2f%%\n", 
+# sum{j3 in CL[3] inter L3}y3[j3],
+# MaxNewTHC, 
+# if MaxNewTHC > 0 then ((sum{j3 in CL[3] inter L3}y3[j3])/(MaxNewTHC))*100 else 0; 
+# printf: "========================================\n";
 
-printf: "\n========================================\n";
-printf: "Region:\t\t  Pop\t Flow\n"; 
-printf: "========================================\n";
-printf{i in I}: "[%-14s]: %d\t %d\n", i, 
-W[i], 
-sum{j1 in L1}u0_1[i,j1] 
-+ sum{j2 in L2} u0_2[i,j2]
-+ sum{j3 in L3} u0_3[i,j3]
-+ sum{j1 in L1} ut1[i,j1]
-+ sum{j2 in L2} ut2[i,j2]
-+ sum{j3 in L3} ut3[i,j3];
+# printf: "\n========================================\n";
+# printf: "TEAM REALLOCATION SUMMARY\n";
+# printf: "========================================\n";
 
-printf: "========================================\n";
-printf: "Reg     > PHC + SHC + THC  :(flow)\n";
-printf: "========================================\n";
-for{i in I}{
-    # PHC
-    printf "M[%-4d] > \t : %d\n", i, W[i];
-    for{j1 in L1: u0_1[i,j1] > 0}{
-    printf "\t> L[%-4s]: %d\n", j1, u0_1[i,j1];}
-    for{j1 in L1: ut1[i,j1] > 0}{
-    printf "\t> L[%-4s]*: %d\n", j1, ut1[i,j1];} 
-    # SHC
-    for{j2 in L2: u0_2[i,j2] > 0}{
-    printf "\t> L[%-4s]: %d\n", j2, u0_2[i,j2];}
-    for{j2 in L2: ut2[i,j2] > 0}{
-    printf "\t> L[%-4s]*: %d\n", j2, ut2[i,j2];}    
-    # THC
-    for{j3 in L3: u0_3[i,j3] > 0}{
-    printf "\t> L[%-4s]: %d\n", j3, u0_3[i,j3];}
-    for{j3 in L3: ut3[i,j3] > 0}{
-    printf "\t> L[%-4s]*: %d\n", j3, ut3[i,j3];}    
-}
-printf: "========================================\n";
-printf: "* Teleconsulta\n";
-printf: "========================================\n";
+# # PHC Team Transfers
+# printf: "\nPHC Team Transfers:\n";
+# printf: "From\t> To\t\tTeam\tQty\tDist\n";
+# printf: "================================================\n";
+# for{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,from,to] > 0.01}{
+#     printf: "[%-4s]\t> [%-4s]\t%-4s\t%.2f\t%.0f\n", 
+#         from, to, e1, transfer1[e1,from,to], DL1[from,to];
+# }
 
+# # SHC Team Transfers
+# printf: "\nSHC Team Transfers:\n";
+# printf: "From\t> To\t\tTeam\tQty\tDist\n";
+# printf: "================================================\n";
+# for{e2 in E[2], from in EL[2] inter L2, to in L2: from != to and transfer2[e2,from,to] > 0.01}{
+#     printf: "[%-4s]\t> [%-4s]\t%-4s\t%.2f\t%.0f\n", 
+#         from, to, e2, transfer2[e2,from,to], DL2[from,to];
+# }
 
-printf: "========================================\n";
-printf: "PHC     > Reg + SHC + THC (dest. flow)\n";
-printf: "========================================\n";
-for{j1 in L1: (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1]+ sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1]) > 0}{
-    printf"L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + SHC + THC)\n", 
-        j1, 
-        sum{i in I}(u0_1[i,j1] + ut1[i,j1])
-        + sum{j2 in L2}u2_1[j2,j1]
-        + sum{j3 in L3}u3_1[j3,j1],
-        sum{i in I}(u0_1[i,j1]+ ut1[i,j1]), sum{j2 in L2}u2_1[j2,j1], sum{j3 in L3}u3_1[j3,j1];
-    # Reg
-    for{i in I: u1_0[j1,i] > 0}{
-    printf"\t> L[%-4s]: %d\n", i, u1_0[j1,i];} # O1_0[j1]*
-    # SHC
-    for{j2 in L2: u1_2[j1,j2] > 0}{
-    printf"\t> L[%-4s]: %d\n", j2, u1_2[j1,j2];} # O1_2[j1]*
-    # THC
-    for{j3 in L3: u1_3[j1,j3] > 0}{
-    printf"\t> L[%-4s]: %d\n", j3, u1_3[j1,j3];} # O1_3[j1]*
-}
+# # THC Team Transfers
+# printf: "\nTHC Team Transfers:\n";
+# printf: "From\t> To\t\tTeam\tQty\tDist\n";
+# printf: "================================================\n";
+# for{e3 in E[3], from in EL[3] inter L3, to in L3: from != to and transfer3[e3,from,to] > 0.01}{
+#     printf: "[%-4s]\t> [%-4s]\t%-4s\t%.2f\t%.0f\n", 
+#         from, to, e3, transfer3[e3,from,to], DL3[from,to];
+# }
 
-printf: "========================================\n";
-printf: "SHC     > Reg + PHC + THC (dest. flow)\n";
-printf: "========================================\n";
-for{j2 in L2: (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]+ sum{i in I} ut2[i,j2])>0}{
-    printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + THC)\n", 
-        j2, 
-        sum{i in I}(u0_2[i,j2] + ut2[i,j2])
-        + sum{j1 in L1}u1_2[j1,j2] 
-        + sum{j3 in L3}u3_2[j3,j2], 
-        sum{i in I}(u0_2[i,j2] + ut2[i,j2]), sum{j1 in L1}u1_2[j1,j2], sum{j3 in L3}u3_2[j3,j2];
-    # Reg
-    for{i in I: u2_0[j2,i] > 0}{
-    printf"\t> L[%-4s]: %d\n", i, u2_0[j2,i];} 
-    # PHC
-    for{j1 in L1: u2_1[j2,j1] > 0}{
-    printf"\t> L[%-4s]: %d\n", j1, u2_1[j2,j1];}
-    # THC
-    for{j3 in L3: u2_3[j2,j3] > 0}{
-    printf"\t> L[%-4s]: %d\n", j3, u2_3[j2,j3];}
-}
+# printf: "\n================================================\n";
+# printf: "NEW TEAMS HIRED\n";
+# printf: "================================================\n";
+# printf: "\nPHC New Hires:\n";
+# printf: "Location\tTeam\tQty\n";
+# printf: "================================================\n";
+# for{j1 in L1, e1 in E[1]: newhire1[e1,j1] > 0.01}{
+#     printf: "[%-5s]%s\t%-4s\t%.2f\n", 
+#         j1, 
+#         if j1 in CL[1] then "*" else " ",
+#         e1, 
+#         newhire1[e1,j1];
+# }
 
-printf: "========================================\n";
-printf: "THC     > Reg + PHC + SHC (dest. flow)\n";
-printf: "========================================\n";
-for{j3 in L3: (sum{i in I}u0_3[i,j3] + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]+ sum{i in I} ut3[i,j3])>0}{
-    printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + SHC)\n", 
-        j3, 
-        sum{i in I}(u0_3[i,j3] + ut3[i,j3])
-        + sum{j1 in L1}u1_3[j1,j3] 
-        + sum{j2 in L2}u2_3[j2,j3], 
-        sum{i in I}(u0_3[i,j3] + ut3[i,j3]), sum{j1 in L1}u1_3[j1,j3], sum{j2 in L2}u2_3[j2,j3];
-    # Reg
-    for{i in I: u3_0[j3,i] > 0}{
-    printf"\t> L[%-4s]: %d\n", i, u3_0[j3,i];} 
-    # PHC
-    for{j1 in L1: u3_1[j3,j1] > 0}{
-    printf"\t> L[%-4s]: %d\n", j1, u3_1[j3,j1];}
-    # SHC
-    for{j2 in L2: u3_2[j3,j2] > 0}{
-    printf"\t> L[%-4s]: %d\n", j2, u3_2[j3,j2];}
-}
+# printf: "\nSHC New Hires:\n";
+# printf: "Location\tTeam\tQty\n";
+# printf: "================================================\n";
+# for{j2 in L2, e2 in E[2]: newhire2[e2,j2] > 0.01}{
+#     printf: "[%-5s]%s\t%-4s\t%.2f\n", 
+#         j2,
+#         if j2 in CL[2] then "*" else " ",
+#         e2, 
+#         newhire2[e2,j2];
+# }
 
-printf: "========================================\n";
-printf: "PHC     :\tCapty\tMet\tUse(%%)\n";
-printf: "========================================\n";
-printf{j1 in EL[1] inter L1}: 
-"[%-5s]:\t%d\t%d\t%3d%%\n", j1,  
-C1[j1], 
-(sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1]),
-if C1[j1] > 0 then ((sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])/(C1[j1]))*100 else 0;
-printf{j1 in CL[1] inter L1: (sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])>0}: 
-"[%-5s*]:\t%d\t%d\t%3d%%\n", j1, 
-C1[j1], 
-(sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1]),
-if C1[j1] > 0 then ((sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])/(C1[j1]))*100 else 0;
+# printf: "\nTHC New Hires:\n";
+# printf: "Location\tTeam\tQty\n";
+# printf: "================================================\n";
+# for{j3 in L3, e3 in E[3]: newhire3[e3,j3] > 0.01}{
+#     printf: "[%-5s]%s\t%-4s\t%.2f\n", 
+#         j3,
+#         if j3 in CL[3] then "*" else " ",
+#         e3, 
+#         newhire3[e3,j3];
+# }
 
-printf: "========================================\n";
-printf: "SHC     :\tCapty\tMet\tUse(%%)\n";
-printf: "========================================\n";
-printf{j2 in EL[2] inter L2}: "[%-6s]:\t%d\t%d\t%3d%%\n", j2, 
-C2[j2], 
-(sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]),
-if C2[j2] > 0 then ((sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])/(C2[j2]))*100 else 0;
-printf{j2 in CL[2] inter L2: (sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])>0}: 
-"[%-5s*]:\t%d\t%d\t%3d%%\n", j2, 
-C2[j2], 
-(sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]),
-if C2[j2] > 0 then ((sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])/(C2[j2]))*100 else 0;
+# printf: "\n========================================\n";
+# printf: "TEAM BALANCE PER LOCATION\n";
+# printf: "========================================\n";
 
-printf: "========================================\n";
-printf: "THC     :\tCapty\tMet\tUse(%%)\n";
-printf: "========================================\n";
-printf{j3 in EL[3] inter L3}: "[%-6s]:\t%d\t%d\t%3d%%\n", j3, 
-C3[j3], 
-(sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]),
-if C3[j3] > 0 then ((sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
-printf{j3 in CL[3] inter L3: (sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])>0}: 
-"[%-5s*]:\t%d\t%d\t%3d%%\n", j3, 
-C3[j3], 
-(sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]),
-if C3[j3] > 0 then ((sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
-printf: "========================================\n\n";
+# printf: "\nPHC Locations:\n";
+# printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
+# printf: "===========================================================================\n";
 
-# display{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,from,to] > 0} transfer1[e1,from,to];
+# for{j1 in L1: (sum{i in I}(u0_1[i,j1]+ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1]+ sum{j3 in L3}u3_1[j3,j1]) > 0}{
+#     for{e1 in E[1]}{
+#         printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+#             j1,
+#             if j1 in CL[1] then "*" else " ",
+#             e1,
+#             if j1 in EL[1] then CNES1[e1,j1] else 0,
+#             # sum{i in I}u0_1[i,j1]*MS1[e1],
+#             # (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1],
+#             # sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1],
+#             (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1]),
+#             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
+#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
+#             newhire1[e1,j1],
+#             (if j1 in EL[1] then CNES1[e1,j1] else 0) # Result: CNES +
+#             + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
+#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0) # Teams transferred OUT            
+#             + newhire1[e1,j1],
+#             if j1 in EL[1] then surplus1[e1,j1] else 0,
+#             deficit1[e1,j1];
+#     }
+# }
 
-printf: "==========================================================="; 
-printf: "===========================================================\n";
+# param Req{j1 in L1, e1 in E[1]} :=
+#     (sum{i in I} (u0_1[i,j1] + ut1[i,j1]) * MS0_1[i,e1])
+#   + (sum{j2 in L2} u2_1[j2,j1] * MS1[e1])
+#   + (sum{j3 in L3} u3_1[j3,j1] * MS1[e1]);
 
-# printf:"\n\nRelatorio gerado em: %s\t\n",time;
-# printf:"Desenvolvimento: Joao Flavio de F. Almeida\t\n";
+# param ReqTotal{e1 in E[1]} :=
+#     sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Req[j1,e1];
 
-# display{i in I, j1 in L1: y0_1[i,j1]>0}: y0_1[i,j1];
-# display{i in I, j2 in L2: y0_2[i,j2]>0}: y0_2[i,j2];
-# display{i in I, j3 in L3: y0_3[i,j3]>0}: y0_3[i,j3];
+# param Result{j1 in L1, e1 in E[1]} :=
+#     (if j1 in EL[1] then CNES1[e1,j1] else 0)
+#   + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
+#   - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
+#   + newhire1[e1,j1];
 
-# display{i in I, j1 in L1: u0_1[i,j1]>0}: u0_1[i,j1];
-# display{i in I, j1 in L1: ut1[i,j1]>0}: ut1[i,j1];
+# param ResultTotal{e1 in E[1]} :=
+#     sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Result[j1,e1];
 
-# display{i in I, j2 in L2: u0_2[i,j2]>0}: u0_2[i,j2];
-# display{i in I, j2 in L2: ut2[i,j2]>0}: ut2[i,j2];
-
-# display{i in I, j3 in L3: u0_3[i,j3]>0}: u0_3[i,j3];
-# display{i in I, j3 in L3: ut3[i,j3]>0}: ut3[i,j3];
+# printf: "===========================================================================\n";
+# printf: "TOTAL TEAMS PER CATEGORY\n";
+# printf: "===========================================================================\n";
+# printf: "Team\tRequired\tResult\n";
+# for{e1 in E[1]}{
+#     printf: "%-4s\t%.2f\t\t%.2f\n",
+#         e1,
+#         ReqTotal[e1],
+#         ResultTotal[e1];
+# }
+# printf: "===========================================================================\n";
 
 
-# display{j1 in L1, i in I: u1_0[j1,i]>0}: u1_0[j1,i];
-# display{j1 in L1: y1[j1] > 0}: y1[j1];
+# printf: "\nSHC Locations:\n";
+# printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
+# printf: "===========================================================================\n";
+# for{j2 in L2: (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]) > 0}{
+#     for{e2 in E[2]}{
+#         printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+#             j2,
+#             if j2 in CL[2] then "*" else " ",
+#             e2,
+#             if j2 in EL[2] then CNES2[e2,j2] else 0, #CNES
+#             # sum{j1 in L1}u1_2[j1,j2]*MS2[e2],
+#             (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])*MS2[e2],
+#             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
+#             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
+#             newhire2[e2,j2],
+#             (if j2 in EL[2] then CNES2[e2,j2] else 0) # CNES
+#             + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
+#             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0) # Teams transferred OUT
+#             + newhire2[e2,j2],
+#             if j2 in EL[2] then surplus2[e2,j2] else 0,
+#             deficit2[e2,j2];
+#     }
+# }
 
-# display{j2 in L2, i in I: u2_0[j2,i]>0}: u2_0[j2,i];
-# display{j3 in L3, i in I: u3_0[j3,i]>0}: u3_0[j3,i];
+# printf: "\nTHC Locations:\n";
+# printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
+# printf: "===========================================================================\n";
+# for{j3 in L3: (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]) > 0}{
+#     for{e3 in E[3]}{
+#         printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+#             j3,
+#             if j3 in CL[3] then "*" else " ",
+#             e3,
+#             if j3 in EL[3] then CNES3[e3,j3] else 0,
+#             # sum{j2 in L2}u2_3[j2,j3]*MS3[e3],
+#             (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])*MS3[e3],
+#             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
+#             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
+#             newhire3[e3,j3],
+#             (if j3 in EL[3] then CNES3[e3,j3] else 0) # CNES
+#             + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
+#             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0) # Teams transferred OUT
+#             + newhire3[e3,j3],
+#             if j3 in EL[3] then surplus3[e3,j3] else 0,
+#             deficit3[e3,j3];
+#     }
+# }
 
+# printf: "\n========================================\n";
+# printf: "Region:\t\t  Pop\t Flow\n"; 
+# printf: "========================================\n";
+# printf{i in I}: "[%-14s]: %d\t %d\n", i, 
+# W[i], 
+# sum{j1 in L1}u0_1[i,j1] 
+# + sum{j2 in L2} u0_2[i,j2]
+# + sum{j3 in L3} u0_3[i,j3]
+# + sum{j1 in L1} ut1[i,j1]
+# + sum{j2 in L2} ut2[i,j2]
+# + sum{j3 in L3} ut3[i,j3];
+
+# printf: "========================================\n";
+# printf: "Reg     > PHC + SHC + THC  :(flow)\n";
+# printf: "========================================\n";
+# for{i in I}{
+#     # PHC
+#     printf "M[%-4d] > \t : %d\n", i, W[i];
+#     for{j1 in L1: u0_1[i,j1] > 0}{
+#     printf "\t> L[%-4s]: %d\n", j1, u0_1[i,j1];}
+#     for{j1 in L1: ut1[i,j1] > 0}{
+#     printf "\t> L[%-4s]*: %d\n", j1, ut1[i,j1];} 
+#     # SHC
+#     for{j2 in L2: u0_2[i,j2] > 0}{
+#     printf "\t> L[%-4s]: %d\n", j2, u0_2[i,j2];}
+#     for{j2 in L2: ut2[i,j2] > 0}{
+#     printf "\t> L[%-4s]*: %d\n", j2, ut2[i,j2];}    
+#     # THC
+#     for{j3 in L3: u0_3[i,j3] > 0}{
+#     printf "\t> L[%-4s]: %d\n", j3, u0_3[i,j3];}
+#     for{j3 in L3: ut3[i,j3] > 0}{
+#     printf "\t> L[%-4s]*: %d\n", j3, ut3[i,j3];}    
+# }
+# printf: "========================================\n";
+# printf: "* Teleconsulta\n";
+# printf: "========================================\n";
+
+
+# printf: "========================================\n";
+# printf: "PHC     > Reg + SHC + THC (dest. flow)\n";
+# printf: "========================================\n";
+# for{j1 in L1: (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1]+ sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1]) > 0}{
+#     printf"L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + SHC + THC)\n", 
+#         j1, 
+#         sum{i in I}(u0_1[i,j1] + ut1[i,j1])
+#         + sum{j2 in L2}u2_1[j2,j1]
+#         + sum{j3 in L3}u3_1[j3,j1],
+#         sum{i in I}(u0_1[i,j1]+ ut1[i,j1]), sum{j2 in L2}u2_1[j2,j1], sum{j3 in L3}u3_1[j3,j1];
+#     # Reg
+#     for{i in I: u1_0[j1,i] > 0}{
+#     printf"\t> L[%-4s]: %d\n", i, u1_0[j1,i];} # O1_0[j1]*
+#     # SHC
+#     for{j2 in L2: u1_2[j1,j2] > 0}{
+#     printf"\t> L[%-4s]: %d\n", j2, u1_2[j1,j2];} # O1_2[j1]*
+#     # THC
+#     for{j3 in L3: u1_3[j1,j3] > 0}{
+#     printf"\t> L[%-4s]: %d\n", j3, u1_3[j1,j3];} # O1_3[j1]*
+# }
+
+# printf: "========================================\n";
+# printf: "SHC     > Reg + PHC + THC (dest. flow)\n";
+# printf: "========================================\n";
+# for{j2 in L2: (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]+ sum{i in I} ut2[i,j2])>0}{
+#     printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + THC)\n", 
+#         j2, 
+#         sum{i in I}(u0_2[i,j2] + ut2[i,j2])
+#         + sum{j1 in L1}u1_2[j1,j2] 
+#         + sum{j3 in L3}u3_2[j3,j2], 
+#         sum{i in I}(u0_2[i,j2] + ut2[i,j2]), sum{j1 in L1}u1_2[j1,j2], sum{j3 in L3}u3_2[j3,j2];
+#     # Reg
+#     for{i in I: u2_0[j2,i] > 0}{
+#     printf"\t> L[%-4s]: %d\n", i, u2_0[j2,i];} 
+#     # PHC
+#     for{j1 in L1: u2_1[j2,j1] > 0}{
+#     printf"\t> L[%-4s]: %d\n", j1, u2_1[j2,j1];}
+#     # THC
+#     for{j3 in L3: u2_3[j2,j3] > 0}{
+#     printf"\t> L[%-4s]: %d\n", j3, u2_3[j2,j3];}
+# }
+
+# printf: "========================================\n";
+# printf: "THC     > Reg + PHC + SHC (dest. flow)\n";
+# printf: "========================================\n";
+# for{j3 in L3: (sum{i in I}u0_3[i,j3] + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]+ sum{i in I} ut3[i,j3])>0}{
+#     printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + SHC)\n", 
+#         j3, 
+#         sum{i in I}(u0_3[i,j3] + ut3[i,j3])
+#         + sum{j1 in L1}u1_3[j1,j3] 
+#         + sum{j2 in L2}u2_3[j2,j3], 
+#         sum{i in I}(u0_3[i,j3] + ut3[i,j3]), sum{j1 in L1}u1_3[j1,j3], sum{j2 in L2}u2_3[j2,j3];
+#     # Reg
+#     for{i in I: u3_0[j3,i] > 0}{
+#     printf"\t> L[%-4s]: %d\n", i, u3_0[j3,i];} 
+#     # PHC
+#     for{j1 in L1: u3_1[j3,j1] > 0}{
+#     printf"\t> L[%-4s]: %d\n", j1, u3_1[j3,j1];}
+#     # SHC
+#     for{j2 in L2: u3_2[j3,j2] > 0}{
+#     printf"\t> L[%-4s]: %d\n", j2, u3_2[j3,j2];}
+# }
+
+# printf: "========================================\n";
+# printf: "PHC     :\tCapty\tMet\tUse(%%)\n";
+# printf: "========================================\n";
+# printf{j1 in EL[1] inter L1}: 
+# "[%-5s]:\t%d\t%d\t%3d%%\n", j1,  
+# C1[j1], 
+# (sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1]),
+# if C1[j1] > 0 then ((sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])/(C1[j1]))*100 else 0;
+# printf{j1 in CL[1] inter L1: (sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])>0}: 
+# "[%-5s*]:\t%d\t%d\t%3d%%\n", j1, 
+# C1[j1], 
+# (sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1]),
+# if C1[j1] > 0 then ((sum{i in I}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1])/(C1[j1]))*100 else 0;
+
+# printf: "========================================\n";
+# printf: "SHC     :\tCapty\tMet\tUse(%%)\n";
+# printf: "========================================\n";
+# printf{j2 in EL[2] inter L2}: "[%-6s]:\t%d\t%d\t%3d%%\n", j2, 
+# C2[j2], 
+# (sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]),
+# if C2[j2] > 0 then ((sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])/(C2[j2]))*100 else 0;
+# printf{j2 in CL[2] inter L2: (sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])>0}: 
+# "[%-5s*]:\t%d\t%d\t%3d%%\n", j2, 
+# C2[j2], 
+# (sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]),
+# if C2[j2] > 0 then ((sum{i in I}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])/(C2[j2]))*100 else 0;
+
+# printf: "========================================\n";
+# printf: "THC     :\tCapty\tMet\tUse(%%)\n";
+# printf: "========================================\n";
+# printf{j3 in EL[3] inter L3}: "[%-6s]:\t%d\t%d\t%3d%%\n", j3, 
+# C3[j3], 
+# (sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]),
+# if C3[j3] > 0 then ((sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
+# printf{j3 in CL[3] inter L3: (sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])>0}: 
+# "[%-5s*]:\t%d\t%d\t%3d%%\n", j3, 
+# C3[j3], 
+# (sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]),
+# if C3[j3] > 0 then ((sum{i in I}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])/(C3[j3]))*100 else 0;
+# printf: "========================================\n\n";
+
+# # display{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,from,to] > 0} transfer1[e1,from,to];
+
+# printf: "==========================================================="; 
+# printf: "===========================================================\n";
+
+# # printf:"\n\nRelatorio gerado em: %s\t\n",time;
+# # printf:"Desenvolvimento: Joao Flavio de F. Almeida\t\n";
+
+# # display{i in I, j1 in L1: y0_1[i,j1]>0}: y0_1[i,j1];
+# # display{i in I, j2 in L2: y0_2[i,j2]>0}: y0_2[i,j2];
+# # display{i in I, j3 in L3: y0_3[i,j3]>0}: y0_3[i,j3];
+
+# # display{i in I, j1 in L1: u0_1[i,j1]>0}: u0_1[i,j1];
+# # display{i in I, j1 in L1: ut1[i,j1]>0}: ut1[i,j1];
+
+# # display{i in I, j2 in L2: u0_2[i,j2]>0}: u0_2[i,j2];
+# # display{i in I, j2 in L2: ut2[i,j2]>0}: ut2[i,j2];
+
+# # display{i in I, j3 in L3: u0_3[i,j3]>0}: u0_3[i,j3];
+# # display{i in I, j3 in L3: ut3[i,j3]>0}: ut3[i,j3];
+
+
+# # display{j1 in L1, i in I: u1_0[j1,i]>0}: u1_0[j1,i];
+# # display{j1 in L1: y1[j1] > 0}: y1[j1];
+
+# # display{j2 in L2, i in I: u2_0[j2,i]>0}: u2_0[j2,i];
+# # display{j3 in L3, i in I: u3_0[j3,i]>0}: u3_0[j3,i];
+
+# # display t1_int;
+# # display{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,from,to] > 0}: transfer1[e1,from,to]; 
+# ########################################################################
 
 end;
+
 
