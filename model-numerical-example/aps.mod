@@ -157,9 +157,9 @@ param HIG_IVS := min{j in I : COUNT_IVS[j] >= card(I) } IVS[j];
 
 # (prof/pop)
 param PROF_POP{i in I} := 
-    if IVS[i] <= LOW_IVS then 1/2500
+    if IVS[i] <= LOW_IVS then 1/3500
         else if IVS[i] <= MED_IVS then 1/3000
-        else if IVS[i] <= HIG_IVS then 1/3500
+        else if IVS[i] <= HIG_IVS then 1/2500
         else "ERROR";
     # if IVS[i] <= LOW_IVS then W[i]/2500
     # else if IVS[i] <= MED_IVS then W[i]/3000
