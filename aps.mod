@@ -505,7 +505,7 @@ s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
     # Required teams based on patient flow
     # - (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1] 
     # - sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1] 
-    - (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
+    - (sum{i in I} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
     + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
     + newhire1[e1,j1]  # New teams hired
@@ -516,7 +516,7 @@ s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
 s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
     # - (sum{i in I}u0_1[i,j1]+ sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1]  # Required teams
     # - sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1]
-    - (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
+    - (sum{i in I} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
     + sum{from in EL[1] inter L1}transfer1[e1,from,j1]  # Transfers IN
     + newhire1[e1,j1]  # New hires
     = deficit1[e1,j1];
@@ -526,53 +526,20 @@ s.t. SurplusLimit1{e1 in E[1], j1 in EL[1] inter L1}:
     surplus1[e1,j1] <= CNES1[e1,j1];
 
 
-# # GLOBAL PROPORTIONALITY: 1 eMU for every 9 eSF
-# # Total eMU must be sufficient to support all eSF (1 eMU per 9 eSF)
-# s.t. Global_eMU_to_eSF_Ratio_EL:
-#     sum{j1 in EL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eMU',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eMU',from,j1] # Teams transferred IN
-#         - sum{to in L1: to != j1}transfer1['eMU',j1,to] # Teams transferred OUT         
-#         + newhire1['eMU',j1]
-#     ) * RATIO_eSF_eMU
-#     >=
-#     sum{j1 in EL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eSF',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1]
-#         - sum{to in L1: to != j1}transfer1['eSF',j1,to]        
-#         + newhire1['eSF',j1]
-#     );
-
-# # For CANDIDATE locations: only new hires and transfers IN
-# s.t. Global_eMU_to_eSF_Ratio_CL:
-#     sum{j1 in CL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eMU',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eMU',from,j1] # Teams transferred IN        
-#         + newhire1['eMU',j1]
-#     ) * RATIO_eSF_eMU
-#     >=
-#     sum{j1 in CL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eSF',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1]        
-#         + newhire1['eSF',j1]
-#     );
-
-
-
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 2 (SHC)
 #################################################
 # CNES (existente) - Necessário + Transferências OUT - Transferências IN + Novas Contratações = Excesso - Déficit
 s.t. TeamBalance2e{j2 in EL[2] inter L2, e2 in E[2]}:
     CNES2[e2,j2]
-    - (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2] + sum{i in I} ut2[i,j2])*MS2[e2]
+    - (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])*MS2[e2]
     + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
     - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
     + newhire2[e2,j2]
     = surplus2[e2,j2] - deficit2[e2,j2];
 
 s.t. TeamBalance2c{j2 in CL[2] inter L2, e2 in E[2]}:
-    - (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2] + sum{i in I} ut2[i,j2])*MS2[e2]
+    - (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])*MS2[e2]
     + sum{from in EL[2] inter L2}transfer2[e2,from,j2] # Teams transferred IN
     + newhire2[e2,j2]
     = deficit2[e2,j2];
@@ -586,14 +553,14 @@ s.t. SurplusLimit2{e2 in E[2], j2 in EL[2] inter L2}:
 # CNES (existente) - Necessário + Transferências OUT - Transferências IN + Novas Contratações = Excesso - Déficit
 s.t. TeamBalance3e{j3 in EL[3] inter L3, e3 in E[3]}:
     CNES3[e3,j3]
-    - (sum{i in I}u0_3[i,j3] + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3] + sum{i in I} ut3[i,j3])*MS3[e3]
+    - (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])*MS3[e3]
     + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
     - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
     + newhire3[e3,j3]
     = surplus3[e3,j3] - deficit3[e3,j3];
 
-s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}:
-    - sum{j2 in L2}u2_3[j2,j3]*MS3[e3]
+s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}:    
+    - (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])*MS3[e3]
     + sum{from in EL[3] inter L3}transfer3[e3,from,j3] # Teams transferred IN
     + newhire3[e3,j3]
     = deficit3[e3,j3];
@@ -916,12 +883,12 @@ printf: "TEAM BALANCE PER LOCATION\n";
 printf: "========================================\n";
 
 printf: "\nPHC Locations:\n";
-printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tSurp\tDef\n";
-printf: "======================================================================\n";
+printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
+printf: "===========================================================================\n";
 
-for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
+for{j1 in L1: (sum{i in I}(u0_1[i,j1]+ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1]+ sum{j3 in L3}u3_1[j3,j1]) > 0}{
     for{e1 in E[1]}{
-        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
             j1,
             if j1 in CL[1] then "*" else " ",
             e1,
@@ -933,6 +900,10 @@ for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
             newhire1[e1,j1],
+            (if j1 in EL[1] then CNES1[e1,j1] else 0) # Result: CNES +
+            + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
+            - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0) # Teams transferred OUT            
+            + newhire1[e1,j1],
             if j1 in EL[1] then surplus1[e1,j1] else 0,
             deficit1[e1,j1];
     }
@@ -946,89 +917,71 @@ param Req{j1 in L1, e1 in E[1]} :=
 param ReqTotal{e1 in E[1]} :=
     sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Req[j1,e1];
 
-printf: "\n======================================================================\n";
-printf: "FINAL TOTAL REQUIRED TEAMS PER CATEGORY\n";
-printf: "======================================================================\n";
+param Result{j1 in L1, e1 in E[1]} :=
+    (if j1 in EL[1] then CNES1[e1,j1] else 0)
+  + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
+  - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
+  + newhire1[e1,j1];
 
+param ResultTotal{e1 in E[1]} :=
+    sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Result[j1,e1];
+
+printf: "===========================================================================\n";
+printf: "TOTAL TEAMS PER CATEGORY\n";
+printf: "===========================================================================\n";
+printf: "Team\tRequired\tResult\n";
 for{e1 in E[1]}{
-    printf: "%-4s: %.2f teams\n", e1, ReqTotal[e1];
+    printf: "%-4s\t%.2f\t\t%.2f\n",
+        e1,
+        ReqTotal[e1],
+        ResultTotal[e1];
 }
-printf: "======================================================================\n";
-
-# # Print eMU summary first (global)
-# printf: "[GLOBAL]\t%-4s*\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
-#     'eMU',
-#     sum{j1 in EL[1] inter L1}CNES1['eMU',j1],
-#     ceil((sum{j1 in EL[1] inter L1}(
-#         (if j1 in EL[1] then CNES1['eSF',j1] else 0)
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN
-#         - sum{to in L1: to != j1}transfer1['eSF',j1,to] # Teams transferred OUT        
-#         + newhire1['eSF',j1]
-#     )) / RATIO_eSF_eMU),
-#     # For CANDIDATE locations: only new hires and transfers IN
-#     ceil((sum{j1 in CL[1] inter L1}(        
-#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN        
-#         + newhire1['eSF',j1]
-#     )) / RATIO_eSF_eMU),
-#     sum{from in EL[1] inter L1, to in L1: from != to}transfer1['eMU',from,to], # Teams transferred OUT 
-#     sum{j1 in L1}newhire1['eMU',j1],
-#     sum{j1 in EL[1] inter L1}surplus1['eMU',j1],
-#     sum{j1 in L1}deficit1['eMU',j1];
-
-# # Print individual PHC locations (excluding eMU)
-# for{j1 in L1: sum{i in I}u0_1[i,j1] > 0}{
-#     for{e1 in E[1]: e1 != 'eMU'}{
-#         printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
-#             j1,
-#             if j1 in CL[1] then "*" else " ",
-#             e1,
-#             if j1 in EL[1] then CNES1[e1,j1] else 0,
-#             (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[e1],
-#             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] 
-#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0),
-#             newhire1[e1,j1],
-#             if j1 in EL[1] then surplus1[e1,j1] else 0,
-#             deficit1[e1,j1];
-#     }
-# }
-
+printf: "===========================================================================\n";
 
 
 printf: "\nSHC Locations:\n";
-printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tSurp\tDef\n";
-printf: "======================================================================\n";
-for{j2 in L2: sum{j1 in L1}u1_2[j1,j2] > 0}{
+printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
+printf: "===========================================================================\n";
+for{j2 in L2: (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]) > 0}{
     for{e2 in E[2]}{
-        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
             j2,
             if j2 in CL[2] then "*" else " ",
             e2,
-            if j2 in EL[2] then CNES2[e2,j2] else 0,
+            if j2 in EL[2] then CNES2[e2,j2] else 0, #CNES
             # sum{j1 in L1}u1_2[j1,j2]*MS2[e2],
-            (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2] + sum{i in I} ut2[i,j2])*MS2[e2],
+            (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])*MS2[e2],
             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
             newhire2[e2,j2],
+            (if j2 in EL[2] then CNES2[e2,j2] else 0) # CNES
+            + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
+            - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0) # Teams transferred OUT
+            + newhire2[e2,j2],
             if j2 in EL[2] then surplus2[e2,j2] else 0,
             deficit2[e2,j2];
     }
 }
 
 printf: "\nTHC Locations:\n";
-printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tSurp\tDef\n";
-printf: "======================================================================\n";
-for{j3 in L3: sum{j2 in L2}u2_3[j2,j3] > 0}{
+printf: "Loc\t\tTeam\tCNES\tReq'd\tTransf\tNew\tRes\tSurp\tDef\n";
+printf: "===========================================================================\n";
+for{j3 in L3: (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]) > 0}{
     for{e3 in E[3]}{
-        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+        printf: "[%-5s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
             j3,
             if j3 in CL[3] then "*" else " ",
             e3,
             if j3 in EL[3] then CNES3[e3,j3] else 0,
             # sum{j2 in L2}u2_3[j2,j3]*MS3[e3],
-            (sum{i in I}u0_3[i,j3] + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3] + sum{i in I} ut3[i,j3])*MS3[e3],
+            (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])*MS3[e3],
             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
             newhire3[e3,j3],
+            (if j3 in EL[3] then CNES3[e3,j3] else 0) # CNES
+            + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
+            - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0) # Teams transferred OUT
+            + newhire3[e3,j3],
             if j3 in EL[3] then surplus3[e3,j3] else 0,
             deficit3[e3,j3];
     }
@@ -1067,12 +1020,16 @@ for{i in I}{
     for{j3 in L3: ut3[i,j3] > 0}{
     printf "\t> L[%-4s]*: %d\n", j3, ut3[i,j3];}    
 }
+printf: "========================================\n";
+printf: "* Teleconsulta\n";
+printf: "========================================\n";
+
 
 printf: "========================================\n";
-printf: "PHC     > Reg + SHC + THC  :(flow)\n";
+printf: "PHC     > Reg + SHC + THC (dest. flow)\n";
 printf: "========================================\n";
 for{j1 in L1: (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1]+ sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1]) > 0}{
-    printf"L[%-4s] > \t : %d\t(%d + %d + %d)\n", 
+    printf"L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + SHC + THC)\n", 
         j1, 
         sum{i in I}(u0_1[i,j1] + ut1[i,j1])
         + sum{j2 in L2}u2_1[j2,j1]
@@ -1090,10 +1047,10 @@ for{j1 in L1: (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1]+ sum{j3 in L3}u3
 }
 
 printf: "========================================\n";
-printf: "SHC     > Reg + PHC + THC  :(flow)\n";
+printf: "SHC     > Reg + PHC + THC (dest. flow)\n";
 printf: "========================================\n";
 for{j2 in L2: (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2]+ sum{i in I} ut2[i,j2])>0}{
-    printf: "L[%-4s] > \t : %d\t(%d + %d + %d)\n", 
+    printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + THC)\n", 
         j2, 
         sum{i in I}(u0_2[i,j2] + ut2[i,j2])
         + sum{j1 in L1}u1_2[j1,j2] 
@@ -1111,10 +1068,10 @@ for{j2 in L2: (sum{i in I}u0_2[i,j2] + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u
 }
 
 printf: "========================================\n";
-printf: "THC     > Reg + PHC + SHC  :(flow)\n";
+printf: "THC     > Reg + PHC + SHC (dest. flow)\n";
 printf: "========================================\n";
 for{j3 in L3: (sum{i in I}u0_3[i,j3] + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3]+ sum{i in I} ut3[i,j3])>0}{
-    printf: "L[%-4s] > \t : %d\t(%d + %d + %d)\n", 
+    printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + SHC)\n", 
         j3, 
         sum{i in I}(u0_3[i,j3] + ut3[i,j3])
         + sum{j1 in L1}u1_3[j1,j3] 
@@ -1200,6 +1157,6 @@ printf: "===========================================================\n";
 # display{j2 in L2, i in I: u2_0[j2,i]>0}: u2_0[j2,i];
 # display{j3 in L3, i in I: u3_0[j3,i]>0}: u3_0[j3,i];
 
-display y3;
+
 end;
 
