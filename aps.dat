@@ -402,17 +402,17 @@ param: I: W   IVS:=
 # eMU 2e-3/9
 # ; 
 
-param MS2:=
-ME2 1e-2
-EF2 1e-2
-DE2 1e-2
-;
+# param MS2:=
+# ME2 1/3000
+# EF2 1/3000
+# DE2 1/3000
+# ;
 
-param MS3:=
-ME3 1e-2
-EF3 2e-2
-DE3	1e-2
-;
+# param MS3:=
+# ME3 1/3000
+# EF3 1/3000
+# DE3	1/3000
+# ;
 
 param CNES1
 :	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6:=
