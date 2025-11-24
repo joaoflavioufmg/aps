@@ -228,27 +228,12 @@ for{j1 in L1: (sum{i in I}(u0_1[i,j1]+ut1[i,j1]) + sum{j2 in L2}u2_1[j2,j1]+ sum
             + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0) # Teams transferred OUT            
             + newhire1[e1,j1],
-            if j1 in EL[1] then surplus1[e1,j1] else 0,
+            # if j1 in EL[1] then surplus1[e1,j1] else 0,
+            surplus1[e1,j1],
             deficit1[e1,j1];
     }
 }
 
-param Req{j1 in L1, e1 in E[1]} =
-    (sum{i in I} (u0_1[i,j1].val + ut1[i,j1].val) * MS0_1[i,e1])
-  + (sum{j2 in L2} u2_1[j2,j1].val * MS1[e1])
-  + (sum{j3 in L3} u3_1[j3,j1].val * MS1[e1]);
-
-param ReqTotal{e1 in E[1]} =
-    sum{j1 in L1} Req[j1,e1];
-
-param Result{j1 in L1, e1 in E[1]} =
-    (if j1 in EL[1] then CNES1[e1,j1] else 0)
-  + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1].val
-  - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to].val else 0)
-  + newhire1[e1,j1].val;
-
-param ResultTotal{e1 in E[1]} =
-    sum{j1 in L1} Result[j1,e1];
 
 printf: "===========================================================================\n";
 printf: "TOTAL TEAMS PER CATEGORY\n";
@@ -257,8 +242,15 @@ printf: "Team\tRequired\tResult\n";
 for{e1 in E[1]}{
     printf: "%-4s\t%.2f\t\t%.2f\n",
         e1,
-        ReqTotal[e1],
-        ResultTotal[e1];
+        # ReqTotal[e1],
+        sum{j1 in L1} (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1]
+        + sum{j2 in L2} u2_1[j2,j1]*MS1[e1]
+        + sum{j3 in L3} u3_1[j3,j1]*MS1[e1]),
+        # ResultTotal[e1];
+        sum{j1 in L1} ((if j1 in EL[1] then CNES1[e1,j1] else 0)
+        + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
+        - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
+        + newhire1[e1,j1]);
 }
 printf: "===========================================================================\n";
 
@@ -282,7 +274,8 @@ for{j2 in L2: (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + su
             + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0) # Teams transferred OUT
             + newhire2[e2,j2],
-            if j2 in EL[2] then surplus2[e2,j2] else 0,
+            # if j2 in EL[2] then surplus2[e2,j2] else 0,
+            surplus2[e2,j2],
             deficit2[e2,j2];
     }
 }
@@ -306,7 +299,8 @@ for{j3 in L3: (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + su
             + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0) # Teams transferred OUT
             + newhire3[e3,j3],
-            if j3 in EL[3] then surplus3[e3,j3] else 0,
+            # if j3 in EL[3] then surplus3[e3,j3] else 0,
+            surplus3[e3,j3],
             deficit3[e3,j3];
     }
 }

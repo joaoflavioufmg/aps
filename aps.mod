@@ -46,9 +46,9 @@ param CE2{c2 in E[2]}; # Team cost K2 ($/month)
 param CE3{c3 in E[3]}; # Team cost K3 ($/month)
 
 # Team relocation cost (per professional per distance unit)
-param RC1{E[1]} default 0.1; # Relocation cost for PHC team ($/prof/min)
-param RC2{E[2]} default 0.1; # Relocation cost for SHC team ($/prof/min)
-param RC3{E[3]} default 0.1; # Relocation cost for THC team ($/prof/min)
+param RC1{E[1]} default 1; # Relocation cost for PHC team ($/prof/min)
+param RC2{E[2]} default 1; # Relocation cost for SHC team ($/prof/min)
+param RC3{E[3]} default 1; # Relocation cost for THC team ($/prof/min)
 
 
 # param D1{I,L[1]}:=round(Uniform(5,15));    # The travel time between i and level-1 PCF.   (min)
@@ -60,12 +60,12 @@ param RC3{E[3]} default 0.1; # Relocation cost for THC team ($/prof/min)
 # param D1_2{L[1],L[2]}; # The travel time between candidate L1 and L2. (min)
 # param D2_3{L[2],L[3]}; # The travel time between candidate L2 and L3. (min)
 # param D1_3{L[1],L[3]}; # The travel time between candidate L1 and L3. (min)
-param D0_1{I,L[1]}:= 1;    # The travel time between i and level-1 PCF.   (min)
-param D0_2{I,L[2]}:= 2;    # The travel time between i and level-2 SCF.   (min)
-param D0_3{I,L[3]}:= 3;    # The travel time between i and level-3 TCF.   (min)
-param D1_2{L[1],L[2]}:= 2; # The travel time between candidate L1 and L2. (min)
-param D2_3{L[2],L[3]}:= 2; # The travel time between candidate L2 and L3. (min)
-param D1_3{L[1],L[3]}:= 3; # The travel time between candidate L1 and L3. (min)
+param D0_1{I,L[1]}:= 10;    # The travel time between i and level-1 PCF.   (min)
+param D0_2{I,L[2]}:= 20;    # The travel time between i and level-2 SCF.   (min)
+param D0_3{I,L[3]}:= 30;    # The travel time between i and level-3 TCF.   (min)
+param D1_2{L[1],L[2]}:= Uniform(15,20); # The travel time between candidate L1 and L2. (min)
+param D2_3{L[2],L[3]}:= 20; # The travel time between candidate L2 and L3. (min)
+param D1_3{L[1],L[3]}:= 30; # The travel time between candidate L1 and L3. (min)
 
 param D1_0{j1 in L[1], i in I} := D0_1[i,j1];    # The travel time between i and level-1 PCF.   (min)
 param D2_0{j2 in L[2], i in I} := D0_2[i,j2];    # The travel time between i and level-2 SCF.   (min)
@@ -75,9 +75,9 @@ param D3_2{j3 in L[3], j2 in L[2]} := D2_3[j2,j3]; # The travel time between can
 param D3_1{j3 in L[3], j1 in L[1]} := D1_3[j1,j3]; # The travel time between candidate L1 and L3. (min)
 
 # Distance matrix between same-level facilities (for team transfer)
-param DL1{EL[1], L[1]} default 0.1; # Distance between L1 facilities (min)
-param DL2{EL[2], L[2]} default 0.2; # Distance between L2 facilities (min)
-param DL3{EL[3], L[3]} default 0.3; # Distance between L3 facilities (min)
+param DL1{EL[1], L[1]} default 10; # Distance between L1 facilities (min)
+param DL2{EL[2], L[2]} default 20; # Distance between L2 facilities (min)
+param DL3{EL[3], L[3]} default 30; # Distance between L3 facilities (min)
 
 
 set Link1 dimen 2:= setof{i in I, j1 in L[1]: D0_1[i,j1] <= Dmax[1]}(i,j1);
@@ -315,9 +315,13 @@ var deficit1{E[1],L1}, >=0; # Deficit of professional e on location L1 (prof)
 var deficit2{E[2],L2}, >=0; # Deficit of professional e on location L2 (prof)
 var deficit3{E[3],L3}, >=0; # Deficit of professional e on location L3 (prof)
 
-var surplus1{E[1],EL[1] inter L1}, >= 0; # Surplus of prof e at existing L1 (prof)
-var surplus2{E[2],EL[2] inter L2}, >= 0; # Surplus of prof e at existing L2 (prof)
-var surplus3{E[3],EL[3] inter L3}, >= 0; # Surplus of prof e at existing L3 (prof)
+# var surplus1{E[1],EL[1] inter L1}, >= 0; # Surplus of prof e at existing L1 (prof)
+# var surplus2{E[2],EL[2] inter L2}, >= 0; # Surplus of prof e at existing L2 (prof)
+# var surplus3{E[3],EL[3] inter L3}, >= 0; # Surplus of prof e at existing L3 (prof)
+
+var surplus1{E[1],j1 in L1}, >= 0; # Surplus of prof e at existing L1 (prof)
+var surplus2{E[2],j2 in L2}, >= 0; # Surplus of prof e at existing L2 (prof)
+var surplus3{E[3],j3 in L3}, >= 0; # Surplus of prof e at existing L3 (prof)
 
 # Team transfer variables (from existing location to any location with deficit)
 var transfer1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, integer, >= 0;
@@ -548,7 +552,7 @@ s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
     - (sum{i in I} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
     + sum{from in EL[1] inter L1}transfer1[e1,from,j1]  # Transfers IN
     + newhire1[e1,j1]  # New hires
-    = deficit1[e1,j1];
+    = surplus1[e1,j1] - deficit1[e1,j1];
 
 # Surplus can only come from existing locations with teams
 s.t. SurplusLimit1{e1 in E[1], j1 in EL[1] inter L1}:
@@ -571,7 +575,7 @@ s.t. TeamBalance2c{j2 in CL[2] inter L2, e2 in E[2]}:
     - (sum{i in I}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1}u1_2[j1,j2] + sum{j3 in L3}u3_2[j3,j2])*MS2[e2]
     + sum{from in EL[2] inter L2}transfer2[e2,from,j2] # Teams transferred IN
     + newhire2[e2,j2]
-    = deficit2[e2,j2];
+    = surplus2[e2,j2] - deficit2[e2,j2];
 
 s.t. SurplusLimit2{e2 in E[2], j2 in EL[2] inter L2}:
     surplus2[e2,j2] <= CNES2[e2,j2];
@@ -592,7 +596,7 @@ s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}:
     - (sum{i in I}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1}u1_3[j1,j3] + sum{j2 in L2}u2_3[j2,j3])*MS3[e3]
     + sum{from in EL[3] inter L3}transfer3[e3,from,j3] # Teams transferred IN
     + newhire3[e3,j3]
-    = deficit3[e3,j3];
+    = surplus3[e3,j3] - deficit3[e3,j3];
 
 s.t. SurplusLimit3{e3 in E[3], j3 in EL[3] inter L3}:
     surplus3[e3,j3] <= CNES3[e3,j3];
@@ -768,9 +772,12 @@ minimize Total_Costs:
         RC3[e3]*DL3[from,to]*transfer3[e3,from,to]
 
     # Penalty for surplus or deficit
-    + sum{e1 in E[1], j1 in EL[1]}10*CE1[e1]*surplus1[e1,j1] 
-    + sum{e2 in E[2], j2 in EL[2]}10*CE2[e2]*surplus2[e2,j2] 
-    + sum{e3 in E[3], j3 in EL[3]}10*CE3[e3]*surplus3[e3,j3] 
+    # + sum{e1 in E[1], j1 in EL[1]}10*CE1[e1]*surplus1[e1,j1] 
+    # + sum{e2 in E[2], j2 in EL[2]}10*CE2[e2]*surplus2[e2,j2] 
+    # + sum{e3 in E[3], j3 in EL[3]}10*CE3[e3]*surplus3[e3,j3] 
+    + sum{e1 in E[1], j1 in L1}10*CE1[e1]*surplus1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}10*CE2[e2]*surplus2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}10*CE3[e3]*surplus3[e3,j3] 
     + sum{e1 in E[1], j1 in L1}10*CE1[e1]*deficit1[e1,j1] 
     + sum{e2 in E[2], j2 in L2}10*CE2[e2]*deficit2[e2,j2] 
     + sum{e3 in E[3], j3 in L3}10*CE3[e3]*deficit3[e3,j3] 
@@ -945,27 +952,12 @@ minimize Total_Costs:
 #             + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
 #             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0) # Teams transferred OUT            
 #             + newhire1[e1,j1],
-#             if j1 in EL[1] then surplus1[e1,j1] else 0,
+#             # if j1 in EL[1] then surplus1[e1,j1] else 0,
+#             surplus1[e1,j1],
 #             deficit1[e1,j1];
 #     }
 # }
 
-# param Req{j1 in L1, e1 in E[1]} :=
-#     (sum{i in I} (u0_1[i,j1] + ut1[i,j1]) * MS0_1[i,e1])
-#   + (sum{j2 in L2} u2_1[j2,j1] * MS1[e1])
-#   + (sum{j3 in L3} u3_1[j3,j1] * MS1[e1]);
-
-# param ReqTotal{e1 in E[1]} :=
-#     sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Req[j1,e1];
-
-# param Result{j1 in L1, e1 in E[1]} :=
-#     (if j1 in EL[1] then CNES1[e1,j1] else 0)
-#   + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
-#   - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
-#   + newhire1[e1,j1];
-
-# param ResultTotal{e1 in E[1]} :=
-#     sum{j1 in L1: sum{i in I}u0_1[i,j1] > 0} Result[j1,e1];
 
 # printf: "===========================================================================\n";
 # printf: "TOTAL TEAMS PER CATEGORY\n";
@@ -974,8 +966,15 @@ minimize Total_Costs:
 # for{e1 in E[1]}{
 #     printf: "%-4s\t%.2f\t\t%.2f\n",
 #         e1,
-#         ReqTotal[e1],
-#         ResultTotal[e1];
+#         # ReqTotal[e1],
+#         sum{j1 in L1} (sum{i in I} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1]
+#         + sum{j2 in L2} u2_1[j2,j1]*MS1[e1]
+#         + sum{j3 in L3} u3_1[j3,j1]*MS1[e1]),
+#         # ResultTotal[e1];
+#         sum{j1 in L1} ((if j1 in EL[1] then CNES1[e1,j1] else 0)
+#         + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
+#         - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
+#         + newhire1[e1,j1]);
 # }
 # printf: "===========================================================================\n";
 
@@ -999,7 +998,8 @@ minimize Total_Costs:
 #             + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
 #             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0) # Teams transferred OUT
 #             + newhire2[e2,j2],
-#             if j2 in EL[2] then surplus2[e2,j2] else 0,
+#             # if j2 in EL[2] then surplus2[e2,j2] else 0,
+#             surplus2[e2,j2],
 #             deficit2[e2,j2];
 #     }
 # }
@@ -1023,7 +1023,8 @@ minimize Total_Costs:
 #             + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
 #             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0) # Teams transferred OUT
 #             + newhire3[e3,j3],
-#             if j3 in EL[3] then surplus3[e3,j3] else 0,
+#             # if j3 in EL[3] then surplus3[e3,j3] else 0,
+#             surplus3[e3,j3],
 #             deficit3[e3,j3];
 #     }
 # }
