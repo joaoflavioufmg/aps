@@ -1,4 +1,5 @@
-mip_rel_gap=0.001
+mip_rel_gap=0.01
+random_seed=5
 primal_feasibility_tolerance=1e-9
 dual_feasibility_tolerance=1e-9
 time_limit=300
