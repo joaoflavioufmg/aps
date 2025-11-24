@@ -1,0 +1,531 @@
+#############################################################################
+# Operations Research for Health Care
+# Author: João Flávio de Freitas Almeida <joao.flavio@dep.ufmg.br>
+# LEPOINT: Laboratório de Estudos em Planejamento de Operações Integradas
+# Departmento de Engenharia de Produção
+# Universidade Federal de Minas Gerais - Escola de Engenharia
+#############################################################################
+# Health Care Facility Location Problem: Considering fixed facilities, 
+# choose intermediate facilities accorting a criteria that improve service
+# quality. Consider health care teams. 
+#############################################################################
+# glpsol -m aps.mod -d aps.dat --cuts
+
+
+data;
+
+# set I:= # The set of demand points.
+# 1
+# 2
+# 3
+# 4
+# 5
+# 6
+# 7
+# 8
+# 9
+# 10
+# 11
+# 12
+# 13
+# 14
+# 15
+# ;
+
+# Health care levels (PHC, SHC, THC)
+set K:=
+1 # PHC: Primary health care (basic care)
+2 # SHC: Secondary health care (intermediate care)
+3 # THC: Tertiary health care (hospital care)
+;
+
+# set P; # Types of Patients (chronic or acute) 
+# Em vez disso, vamos determinar idosos, crianças ou mulheres grávidas
+# como um percentual da população de I.
+# set P:= 
+# 1 # Cronic conditions
+# 2 # Acute conditions
+# ; 
+
+# Basic health care units teams (PHC)
+set E[1] :=
+eSF # Equipe de Saúde da Família
+eSB # Equipe de Saúde Bucal
+eMU # Equipe Multi
+;
+
+
+# Intermediate health care units teams (SHC)
+set E[2] :=
+ME2 # Clinical physician
+EF2 # Nurse
+DE2 # Dentist
+;
+
+# Tertiary health care units teams (Hospital)
+set E[3] :=
+ME3 # Clinical physician
+EF3 # Nurse
+DE3 # Dentist
+;
+
+# EXISTING health care units on three levels
+set EL[1] := PHC1 PHC2 PHC3 PHC4 PHC5 PHC6;
+set EL[2] := SHC1 SHC2 SHC3 SHC4;
+set EL[3] := THC1 THC2 THC3;
+
+# CANDIDADE health care LOCATIONS on three levels
+set CL[1] := PHC7 PHC8 PHC9 PHC10;
+set CL[2] := SHC5 SHC6 SHC7 SHC8;
+set CL[3] := THC4 THC5 THC6;
+
+# Maximal distance for each level
+param Dmax:=
+1   10
+2   20
+3   25
+;
+
+################################################
+# BUDGET PARAMETER
+# param BUDGET := 157300; # Overall budget constraint ($/year)
+param BUDGET := 1643000; # Overall budget constraint ($/year)
+################################################
+
+# Team cost K1 ($/year)
+param CE1:=
+eSF 10
+eSB 10
+eMU 10
+;
+
+
+# Team cost K2 ($/year)
+param CE2:=
+ME2 20
+EF2 20
+DE2 20
+;
+
+# Team cost K3 ($/year)
+param CE3:=
+ME3 30
+EF3 30
+DE3 30
+;
+
+# param D0_1 
+# :	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6 PHC7 PHC8 PHC9 PHC10:=
+# 1	1	1	1	1	1	1	1	1	1	1	
+# 2	1	1	1	1	1	1	1	1	1	1	
+# 3	1	1	1	1	1	1	1	1	1	1	
+# 4	1	1	1	1	1	1	1	1	1	1	
+# 5	1	1	1	1	1	1	1	1	1	1	
+# 6	1	1	1	1	1	1	1	1	1	1	
+# 7	1	1	1	1	1	1	1	1	1	1	
+# 8	1	1	1	1	1	1	1	1	1	1	
+# 9	1	1	1	1	1	1	1	1	1	1	
+# 10	1	1	1	1	1	1	1	1	1	1	
+# 11	1	1	1	1	1	1	1	1	1	1	
+# 12	1	1	1	1	1	1	1	1	1	1	
+# 13	1	1	1	1	1	1	1	1	1	1	
+# 14	1	1	1	1	1	1	1	1	1	1	
+# 15	1	1	1	1	1	1	1	1	1	1	
+# ;
+
+# param D1_2 
+# :	SHC1 SHC2 SHC3 SHC4 SHC5 SHC6 SHC7 SHC8:=
+# PHC1	2	2	2	2	2	2	2	2	
+# PHC2	2	2	2	2	2	2	2	2	
+# PHC3	2	2	2	2	2	2	2	2	
+# PHC4	2	2	2	2	2	2	2	2	
+# PHC5	2	2	2	2	2	2	2	2	
+# PHC6	2	2	2	2	2	2	2	2	
+# PHC7	2	2	2	2	2	2	2	2	
+# PHC8	2	2	2	2	2	2	2	2	
+# PHC9	2	2	2	2	2	2	2	2	
+# PHC10	2	2	2	2	2	2	2	2		
+# ;
+
+# param D2_3 
+# :	THC1 THC2 THC3 THC4 THC5 THC6:=
+# SHC1	3	3	3	3	3	3	
+# SHC2	3	3	3	3	3	3	
+# SHC3	3	3	3	3	3	3	
+# SHC4	3	3	3	3	3	3	
+# SHC5	3	3	3	3	3	3	
+# SHC6	3	3	3	3	3	3	
+# SHC7	3	3	3	3	3	3	
+# SHC8	3	3	3	3	3	3	
+# ;
+
+# # Distance matrix between same-level facilities (for team transfer)
+# # {EL[1], L[1]} default 0; # Distance between L1 facilities (min)
+# param DL1: PHC1 PHC2 PHC3 PHC4 PHC5 PHC6 PHC7 PHC8 PHC9 PHC10:= 										
+# PHC1 	16	17	47	22	32	7	44	45	38	44
+# PHC2 	47	31	60	5	17	5	59	39	5	16
+# PHC3 	24	48	41	7	12	30	37	14	47	44
+# PHC4 	60	11	18	34	56	45	52	21	32	36
+# PHC5 	18	47	15	59	36	5	47	40	30	7
+# PHC6	9	14	36	45	44	19	55	27	14	43
+# ;										
+
+
+# # {EL[2], L[2]} default 0; # Distance between L2 facilities (min)
+# param DL2: SHC1 SHC2 SHC3 SHC4 SHC5 SHC6 SHC7 SHC8:=								
+# SHC1 	51	35	38	50	53	49	56	19
+# SHC2 	39	58	32	29	9	30	43	23
+# SHC3 	59	22	49	58	16	41	14	21
+# SHC4 	41	43	50	50	10	60	44	14
+# ;								
+
+
+# # {EL[3], L[3]} default 0; # Distance between L3 facilities (min)
+# param DL3: THC1 THC2 THC3 THC4 THC5 THC6:=						
+# THC1 	11	44	51	14	52	46
+# THC2 	40	5	10	40	53	25
+# THC3	41	42	51	18	13	20
+# ;						
+
+
+# # Travel cost/ patients h, from PHC i to IHC j
+# param TC1 
+# :	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6 PHC7 PHC8 PHC9 PHC10:=
+# 1	1	1	1	1	1	1	1	1	1	1	
+# 2	1	1	1	1	1	1	1	1	1	1	
+# 3	1	1	1	1	1	1	1	1	1	1	
+# 4	1	1	1	1	1	1	1	1	1	1	
+# 5	1	1	1	1	1	1	1	1	1	1	
+# 6	1	1	1	1	1	1	1	1	1	1	
+# 7	1	1	1	1	1	1	1	1	1	1	
+# 8	1	1	1	1	1	1	1	1	1	1	
+# 9	1	1	1	1	1	1	1	1	1	1	
+# 10	1	1	1	1	1	1	1	1	1	1	
+# 11	1	1	1	1	1	1	1	1	1	1	
+# 12	1	1	1	1	1	1	1	1	1	1	
+# 13	1	1	1	1	1	1	1	1	1	1	
+# 14	1	1	1	1	1	1	1	1	1	1	
+# 15	1	1	1	1	1	1	1	1	1	1	
+# ;
+
+# param TC2 
+# :	SHC1 SHC2 SHC3 SHC4 SHC5 SHC6 SHC7 SHC8:=
+# PHC1	1	1	1	1	1	1	1	1	
+# PHC2	1	1	1	1	1	1	1	1	
+# PHC3	1	1	1	1	1	1	1	1	
+# PHC4	1	1	1	1	1	1	1	1	
+# PHC5	1	1	1	1	1	1	1	1	
+# PHC6	1	1	1	1	1	1	1	1	
+# PHC7	1	1	1	1	1	1	1	1	
+# PHC8	1	1	1	1	1	1	1	1	
+# PHC9	1	1	1	1	1	1	1	1	
+# PHC10	1	1	1	1	1	1	1	1	
+# ;
+
+# param TC3 
+# :	THC1 THC2 THC3 THC4 THC5 THC6:=
+# SHC1	1	1	1	1	1	1	
+# SHC2	1	1	1	1	1	1	
+# SHC3	1	1	1	1	1	1	
+# SHC4	1	1	1	1	1	1	
+# SHC5	1	1	1	1	1	1	
+# SHC6	1	1	1	1	1	1	
+# SHC7	1	1	1	1	1	1	
+# SHC8	1	1	1	1	1	1	
+# ;
+
+# Variable cost of IHC j / patient 
+param VC1:=  
+PHC1   5 
+PHC2   5 
+PHC3   5 
+PHC4   5 
+PHC5   5 
+PHC6   5 
+PHC7   5 
+PHC8   5 
+PHC9   5 
+PHC10   5
+;
+
+param VC2:=
+SHC1    10
+SHC2    10
+SHC3    10
+SHC4    10
+SHC5    10
+SHC6    10
+SHC7    10
+SHC8    10
+;
+
+param VC3:=
+THC1    20
+THC2    20
+THC3    20
+THC4    20
+THC5    20
+THC6    20
+;
+
+param FC1:=	
+PHC1	1000
+PHC2	1000
+PHC3	1000
+PHC4	1000
+PHC5	1000
+PHC6	1000
+PHC7	10000
+PHC8	10000
+PHC9	10000
+PHC10	10000
+;	
+
+param FC2:=	
+SHC1	200
+SHC2	200
+SHC3	200
+SHC4	200
+SHC5	2000
+SHC6	2000
+SHC7	2000
+SHC8	2000
+;	
+
+param FC3:=	
+THC1	300
+THC2	300
+THC3	300
+THC4	300
+THC5	3000
+THC6	3000
+;	
+
+# # Annualized Investment for operating NEW PHC j    ($/year)
+# param IA1:= 
+# PHC1	0
+# PHC2	0
+# PHC3	0
+# PHC4	0
+# PHC5	0
+# PHC6	0
+# PHC7	1000
+# PHC8	1000
+# PHC9	1000
+# PHC10	1000
+# ;
+
+# # Annualized Investment for operating NEW SHC j    ($/year)
+# param IA2:= 
+# SHC1	0
+# SHC2	0
+# SHC3	0
+# SHC4	0
+# SHC5	5000
+# SHC6	5000
+# SHC7	5000
+# SHC8	5000
+# ;
+
+# param IA3:= # Annualized Investment for operating NEW THC j    ($/year)
+# THC1	0
+# THC2	0
+# THC3	0
+# THC4	3000
+# THC5	3000
+# THC6	3000
+# ;
+
+
+# # The population size 
+# # of type p at demand point i
+# param W:=
+# 1	300	
+# 2	300	
+# 3	300	
+# 4	300	
+# 5	300	
+# 6	300	
+# 7	300	
+# 8	300	
+# 9	300	
+# 10	300	
+# 11	300	
+# 12	300	
+# 13	300	
+# 14	300	
+# 15	300	
+# ;
+
+# of type p at demand point i and 
+# vulnerability V (the higher vulnerability, the worse)	
+param: I: W   IVS:=	
+# 1   300 	0.423
+# 2   300 	0.437
+# 3   300 	0.461
+# 4   300 	0.457
+# 5   300 	0.423
+# 6   300 	0.427
+# 7   300 	0.601
+# 8   300 	0.413
+# 9   300 	0.409
+# 10  300 	0.405
+# 11  300 	0.420
+# 12  300 	0.434
+# 13  300 	0.301
+# 14  300 	0.298
+# 15  300 	0.422
+# ;	
+
+1   1000 	0.323
+2   3000 	0.337
+3   2000 	0.461
+4   4000 	0.357
+5   1000 	0.323
+6   1000 	0.427
+7   2000 	0.601
+8   3000 	0.413
+9   3000 	0.409
+10  2000 	0.305
+11  1000 	0.420
+12  2000 	0.334
+13  3000 	0.301
+14  4000 	0.298
+15  5000 	0.422
+;
+
+
+# # Ministry of Health parameter for requirements PHC
+# param MS1:=
+# eSF	2e-3 
+# eSB 2e-3
+# eMU 2e-3/9
+# ; 
+
+# param MS2:=
+# ME2 1/3000
+# EF2 1/3000
+# DE2 1/3000
+# ;
+
+# param MS3:=
+# ME3 1/3000
+# EF3 1/3000
+# DE3	1/3000
+# ;
+
+param CNES1
+:	PHC1 PHC2 PHC3 PHC4 PHC5 PHC6:=
+eSF	4	1	4	1	2	1
+eSB	1	3	1	3	1	1
+eMU	1	0	0	1	0	1
+;											
+
+param CNES2
+:	SHC1 SHC2 SHC3 SHC4:=
+ME2	3	4	3	2
+EF2	3	4	5	6
+DE2	3	3	3	4
+;									
+
+param CNES3
+:	THC1 THC2 THC3:=
+ME3 2	2	1
+EF3 2	5	3
+DE3 2	2	2
+;							
+
+# The capacity of a level-1 PCF in K.
+param C1:=
+PHC1    5000
+PHC2    5000
+PHC3    5000
+PHC4    5000
+PHC5    5000
+PHC6    5000
+PHC7    5000
+PHC8    5000
+PHC9    3000
+PHC10   500
+;											
+
+param C2:=
+SHC1	2000
+SHC2	2000
+SHC3	2000
+SHC4	2000
+SHC5	2000
+SHC6	1500
+SHC7	1000
+SHC8	1000
+;
+
+param C3:=	
+THC1	800
+THC2	500
+THC3	500
+THC4	500
+THC5	1000
+THC6	1000
+;	
+
+# The number of alevel-k to be established.
+param U:=
+1	4
+2	3
+3	2
+; 
+
+# Primary care facility (PCF)  — O1_0  O1_2  O1_3
+# The proportion of patients in a L-1 to i in I, and L-3 PCF.
+param: O1_0   O1_2   O1_3 :=
+PHC1   0.71   0.20   0.05
+PHC2   0.71   0.20   0.05
+PHC3   0.71   0.20   0.05
+PHC4   0.71   0.20   0.05
+PHC5   0.71   0.20   0.05
+PHC6   0.71   0.20   0.05
+PHC7   0.71   0.20   0.05
+PHC8   0.71   0.20   0.05
+PHC9   0.71   0.20   0.05
+PHC10  0.71   0.20   0.05
+;
+
+# Secondary care facility (SCF) — O2_0  O2_1  O2_3
+# The proportion of patients in a L-2 to i in I,, L-1 and L-3 SCF.
+param: O2_0   O2_1   O2_3 :=
+SHC1   0.65   0.20   0.10
+SHC2   0.65   0.20   0.10
+SHC3   0.65   0.20   0.10
+SHC4   0.65   0.20   0.10
+SHC5   0.65   0.20   0.10
+SHC6   0.65   0.20   0.10
+SHC7   0.65   0.20   0.10
+SHC8   0.65   0.20   0.10
+;
+
+# Tertiary care facility (TCF) — O3_0  O3_1  O3_2
+# The proportion of patients in a L-3 to i in I, L-1 and L-2 TCF.
+param: O3_0   O3_1   O3_2 :=
+THC1   0.80   0.10   0.05
+THC2   0.80   0.10   0.05
+THC3   0.80   0.10   0.05
+THC4   0.80   0.10   0.05
+THC5   0.80   0.10   0.05
+THC6   0.80   0.10   0.05
+;
+
+
+# Percentual maximo de Atendimentos Telemedicina de casa > PHC, SHC, THC
+param MAX_TELE_PHC := 0.05;
+param MAX_TELE_SHC := 0.05;
+param MAX_TELE_THC := 0.05;
+
+# Percentual maximo de deslocamentos Casa > PHC, SHC, THC 
+param MAX_HOME_PHC := 1.00;
+param MAX_HOME_SHC := 0.15;
+param MAX_HOME_THC := 0.05;
+#################################################
+
+end;
+
