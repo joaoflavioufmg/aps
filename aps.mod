@@ -30,20 +30,22 @@ param Dmax{K}; # Maximal distance (or travel time)
 
 set E{K}; # Health care team from level k 
 
-set EL{K}; # EXISTING health care units on three levels
+set L{k in K};
 
-set CL{K}; # CANDIDATE health care LOCATIONS on three levels
+set EL{k in K} within L[k]; # EXISTING health care units on three levels
 
-set L{k in K} := EL[k] union CL[k]; 
+set CL{k in K} within L[k]; # CANDIDATE health care LOCATIONS on three levels
+
+# set L{k in K} := EL[k] union CL[k]; 
 
 ################################################
 # BUDGET PARAMETER
-param BUDGET >= 0; # Overall budget constraint ($/month)
+param BUDGET >= 0; # Overall budget constraint ($/year)
 ################################################
 
-param CE1{c1 in E[1]}; # Team cost K1 ($/month)
-param CE2{c2 in E[2]}; # Team cost K2 ($/month)
-param CE3{c3 in E[3]}; # Team cost K3 ($/month)
+param CE1{c1 in E[1]}; # Team cost K1 ($/year)
+param CE2{c2 in E[2]}; # Team cost K2 ($/year)
+param CE3{c3 in E[3]}; # Team cost K3 ($/year)
 
 # Team relocation cost (per professional per distance unit)
 param RC1{E[1]} default 1; # Relocation cost for PHC team ($/prof/min)
@@ -116,20 +118,25 @@ param TC1_3{j1 in L[1], j3 in L[3]}:= D1_3[j1,j3]*CKM; # Travel cost/pat  from L
 param TC2_3{j2 in L[2], j3 in L[3]}:= D2_3[j2,j3]*CKM; # Travel cost/pat  from L2 to L3            ($/min)
 
 
-param VC1{L[1]}; # Variable cost of PHC j / pop h ($/pop)
-param VC2{L[2]}; # Variable cost of SHC j / pop h ($/pop)
-param VC3{L[3]}; # Variable cost of THC j / pop h ($/pop)
+# Fonte: Tabela APS.dat.xlsx
+param SIZE{L[1]}, default 3; # Porte da UBS
+param VC1{L[1]}; # := 3; # Variable cost of PHC j / pop h ($/pop)
+param VC2{L[2]}; # := 0; # Variable cost of SHC j / pop h ($/pop)
+param VC3{L[3]}; # := 0; # Variable cost of THC j / pop h ($/pop)
 
-param FC1{L[1]}; # Fixed cost per period for operating PHC j    ($/month)
-param FC2{L[2]}; # Fixed cost per period for operating SHC j    ($/month)
-param FC3{L[3]}; # Fixed cost per period for operating THC j    ($/month)
+# Fixed cost per period for operating PHC j    ($/year)
+# Fonte: https://cbc2022.abcustos.org.br/rest/artigo/98/semFolhaDeRosto/pdf?chaveDeAcessoNaoAutenticado=97827de5f831bdf92b6c6bd603308190ea2769c6
+param FC1{L[1]}; # := 100000; # Custos administrativos: 100 mil/ano ($/year): Dado de 2022 ajustado pela inflação
+param FC2{L[2]}; # := 0; # Fixed cost per period for operating SHC j    ($/year)
+param FC3{L[3]}; # := 0; # Fixed cost per period for operating THC j    ($/year)
 
 # ############## Amortização anual para Investimento em nova UBS ############## 
-param R:=0.15;   # Taxa de desconto anual
+param R:=0.10;   # Taxa de desconto anual
 param N:=20;     # Vida útil (anos)
-param I_L1:= 1000; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
-param I_L2:= 2000; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
-param I_L3:= 3000; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
+param I_L1:= 1000; # 3818078; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
+# Fonte: https://www.gov.br/saude/pt-br/assuntos/novo-pac-saude/unidades-basicas-de-saude/faq-ubs/analise-habilitacao-e-selecao-das-propostas/valores-para-construcao-de-nova-ubs
+param I_L2:= 0; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
+param I_L3:= 0; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
 # Annualized Investment for operating NEW PHC j    ($/year)
 param IA1{CL[1]} := round(I_L1*(R*(1+R)^N)/((1+R)^N-1),0); 
 # display IA1;
@@ -196,7 +203,8 @@ param CNES2{E[2],EL[2]}; # Health professional teams PHC at location L2 (prof)
 param CNES3{E[3],EL[3]}; # Health professional teams PHC at location L3 (prof)
 
 # Service operating capacity at IHC j
-param C1{L[1]}; # The capacity of a level-1 PCF in K. (pop)
+# The capacity of a level-1 PCF in K. (pop)
+param C1{j1 in L[1]} := SIZE[j1]*3000; 
 param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
 param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 
@@ -427,9 +435,6 @@ s.t. DemandIn{i in I}:
 
 
 # Flow balance PHC > SHC > THC
-# s.t. R1{j1 in L1}: sum{j2 in L2}u1_2[j1,j2] = O1[j1]*sum{i in I}u0_1[i,j1];
-# s.t. R2{j2 in L2}: sum{j3 in L3}u2_3[j2,j3] = O2[j2]*sum{j1 in L1}u1_2[j1,j2];
-
 s.t. R1{j1 in L1}: 
     # Outflows
     sum{i in I} u1_0[j1,i]         # L1 → Home # O1_0[j1]*
@@ -542,9 +547,7 @@ s.t. R3c{j3 in L3}:
 # For EXISTING locations: calculate surplus/deficit
 s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
     CNES1[e1,j1]  # Existing teams
-    # Required teams based on patient flow
-    # - (sum{i in I}u0_1[i,j1] + sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1] 
-    # - sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1] 
+    # Required teams based on patient flow    
     - (sum{i in I} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
     + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
@@ -554,8 +557,7 @@ s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
 
 # For CANDIDATE locations: only new hires and transfers IN
 s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
-    # - (sum{i in I}u0_1[i,j1]+ sum{j2 in L2}u2_1[j2,j1] + sum{j3 in L3}u3_1[j3,j1] + sum{i in I} ut1[i,j1])*MS1[i,e1]  # Required teams
-    # - sum{i in I} (u0_1[i,j1] + ut1[i,j1] + (if i in L2 then u2_1[i,j1] else 0) + (if i in L3 then u3_1[i,j1] else 0))*MS1[i,e1]
+    # Required teams
     - (sum{i in I} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3}u3_1[j3,j1]*MS1[e1])
     + sum{from in EL[1] inter L1}transfer1[e1,from,j1]  # Transfers IN
     + newhire1[e1,j1]  # New hires
@@ -613,9 +615,6 @@ s.t. SurplusLimit3{e3 in E[3], j3 in EL[3] inter L3}:
 #################################################
 
 # Existing locations
-# s.t. R6e{j1 in EL[1] inter L1}: sum{i in I}u0_1[i,j1] <= C1[j1];
-# s.t. R7e{j2 in EL[2] inter L2}: sum{j1 in L1}u1_2[j1,j2] <= C2[j2];
-# s.t. R8e{j3 in EL[3] inter L3}: sum{j2 in L2}u2_3[j2,j3] <= C3[j3];
 s.t. R6e{j1 in EL[1] inter L1}: 
     sum{i in I}u0_1[i,j1]                   # Home → L1
     + sum{j2 in L2}u2_1[j2,j1]              # L2 → L1
@@ -651,9 +650,6 @@ s.t. R11e{j3 in EL[3] inter L3}:
      
 
 # Candidate locations (activated only if used)
-# s.t. R6c{j1 in L1}: sum{i in I}u0_1[i,j1] <= C1[j1]*y1[j1];
-# s.t. R7c{j2 in L2}: sum{j1 in L1}u1_2[j1,j2] <= C2[j2]*y2[j2];
-# s.t. R8c{j3 in L3}: sum{j2 in L2}u2_3[j2,j3] <= C3[j3]*y3[j3];
 s.t. R6c{j1 in CL[1] inter L1}: 
     sum{i in I}u0_1[i,j1]                   # Home → L1
     + sum{j2 in L2}u2_1[j2,j1]              # L2 → L1
@@ -716,10 +712,7 @@ s.t. APSCost: Total_Costs_APS =
     + sum{j1 in L1}u1_3[j1,j3] 
     + sum{j2 in L2}u2_3[j2,j3]
     + sum{i in I} ut3[i,j3])
-    # # Transportation costs
-    # + sum{i in I, j1 in L1}D0_1[i,j1]*TC1[i,j1]*u0_1[i,j1] 
-    # + sum{j1 in L1, j2 in L2}D1_2[j1,j2]*TC2[j1,j2]*u1_2[j1,j2]  
-    # + sum{j2 in L2, j3 in L3}D2_3[j2,j3]*TC3[j2,j3]*u2_3[j2,j3]
+    # NO patients Transportation costs  
     # Re-assignment costs
     + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
          RC1[e1]*DL1[from,to]*transfer1[e1,from,to]
@@ -727,13 +720,8 @@ s.t. APSCost: Total_Costs_APS =
          RC2[e2]*DL2[from,to]*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
          RC3[e3]*DL3[from,to]*transfer3[e3,from,to];
-    # # Penalty for surplus or deficit
-    # + sum{e1 in E[1], j1 in EL[1]}CE1[e1]*surplus1[e1,j1] 
-    # + sum{e2 in E[2], j2 in EL[2]}CE2[e2]*surplus2[e2,j2] 
-    # + sum{e3 in E[3], j3 in EL[3]}CE3[e3]*surplus3[e3,j3] 
-    # + sum{e1 in E[1], j1 in L1}CE1[e1]*deficit1[e1,j1] 
-    # + sum{e2 in E[2], j2 in L2}CE2[e2]*deficit2[e2,j2] 
-    # + sum{e3 in E[3], j3 in L3}CE3[e3]*deficit3[e3,j3]
+    # NO Penalty for surplus or deficit
+
 
 # Overall budget constraint
 s.t. APSBudgetConstraint:  Total_Costs_APS <= BUDGET;
@@ -779,9 +767,6 @@ minimize Total_Costs:
         RC3[e3]*DL3[from,to]*transfer3[e3,from,to]
 
     # Penalty for surplus or deficit
-    # + sum{e1 in E[1], j1 in EL[1]}10*CE1[e1]*surplus1[e1,j1] 
-    # + sum{e2 in E[2], j2 in EL[2]}10*CE2[e2]*surplus2[e2,j2] 
-    # + sum{e3 in E[3], j3 in EL[3]}10*CE3[e3]*surplus3[e3,j3] 
     + sum{e1 in E[1], j1 in L1}10*CE1[e1]*surplus1[e1,j1] 
     + sum{e2 in E[2], j2 in L2}10*CE2[e2]*surplus2[e2,j2] 
     + sum{e3 in E[3], j3 in L3}10*CE3[e3]*surplus3[e3,j3] 
