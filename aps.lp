@@ -1,9 +1,9 @@
 \* Problem: aps *\
 
 Minimize
- Total_Costs: + 1000 y1(PHC1) + 1000 y1(PHC2) + 1000 y1(PHC3)
- + 1000 y1(PHC4) + 1000 y1(PHC5) + 1000 y1(PHC6) + 1117 y1(PHC7)
- + 1117 y1(PHC8) + 1117 y1(PHC9) + 10117 y1(PHC10) + 200 y2(SHC1)
+ Total_Costs: + 1000 y1(PHC1) + 2000 y1(PHC2) + 2000 y1(PHC3)
+ + 1000 y1(PHC4) + 2000 y1(PHC5) + 1000 y1(PHC6) + 2117 y1(PHC7)
+ + 3117 y1(PHC8) + 3117 y1(PHC9) + 10117 y1(PHC10) + 200 y2(SHC1)
  + 200 y2(SHC2) + 200 y2(SHC3) + 200 y2(SHC4) + 2000 y2(SHC5)
  + 2000 y2(SHC6) + 2000 y2(SHC7) + 2000 y2(SHC8) + 300 y3(THC1)
  + 300 y3(THC2) + 300 y3(THC3) + 300 y3(THC4) + 3000 y3(THC5)
@@ -6992,9 +6992,9 @@ Subject To
  R12c: + y1(PHC7) + y1(PHC8) + y1(PHC9) + y1(PHC10) <= 4
  R13c: + y2(SHC5) + y2(SHC6) + y2(SHC7) + y2(SHC8) <= 3
  R14c: + y3(THC4) + y3(THC5) + y3(THC6) <= 2
- APSCost: - 1000 y1(PHC1) - 1000 y1(PHC2) - 1000 y1(PHC3)
- - 1000 y1(PHC4) - 1000 y1(PHC5) - 1000 y1(PHC6) - 1117 y1(PHC7)
- - 1117 y1(PHC8) - 1117 y1(PHC9) - 10117 y1(PHC10) - 200 y2(SHC1)
+ APSCost: - 1000 y1(PHC1) - 2000 y1(PHC2) - 2000 y1(PHC3)
+ - 1000 y1(PHC4) - 2000 y1(PHC5) - 1000 y1(PHC6) - 2117 y1(PHC7)
+ - 3117 y1(PHC8) - 3117 y1(PHC9) - 10117 y1(PHC10) - 200 y2(SHC1)
  - 200 y2(SHC2) - 200 y2(SHC3) - 200 y2(SHC4) - 2000 y2(SHC5)
  - 2000 y2(SHC6) - 2000 y2(SHC7) - 2000 y2(SHC8) - 300 y3(THC1)
  - 300 y3(THC2) - 300 y3(THC3) - 300 y3(THC4) - 3000 y3(THC5)
@@ -7484,7 +7484,7 @@ Subject To
  - 30 newhire3(EF3,THC4) - 30 newhire3(DE3,THC4) - 30 newhire3(ME3,THC5)
  - 30 newhire3(EF3,THC5) - 30 newhire3(DE3,THC5) - 30 newhire3(ME3,THC6)
  - 30 newhire3(EF3,THC6) - 30 newhire3(DE3,THC6) + Total_Costs_APS = -0
- APSBudgetConstraint: + Total_Costs_APS <= 350000
+ APSBudgetConstraint: + Total_Costs_APS <= 400000
 
 Bounds
  0 <= y0_1(1,PHC1) <= 1
