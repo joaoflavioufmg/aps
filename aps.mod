@@ -259,7 +259,11 @@ param ExistingCost :=
     sum{j2 in EL[2] inter L2}FC2[j2] + 
     sum{j3 in EL[3] inter L3}FC3[j3];
 
-param AvailableBudget := max(0, BUDGET - ExistingCost);
+# Add a check statement:
+# check: BUDGET >= ExistingCost;
+
+# param AvailableBudget := max(0, BUDGET - ExistingCost);
+param AvailableBudget := BUDGET - ExistingCost;
 
 param MaxNewPHC := if card(CL[1] inter L1) > 0 and MinCostPerNewPHC > 0 then 
                    min(U[1], floor(AvailableBudget / MinCostPerNewPHC)) else 0;
@@ -287,7 +291,8 @@ param MaxNewTHC := if card(CL[3] inter L3) > 0 and MinCostPerNewTHC > 0 then
 # printf: "  THC:\t\t\t%d (original: %d)\n", MaxNewTHC, U[3];
 # printf: "========================================\n\n";
 
-param M:= 10000000000;
+# param M:= 10000;
+param PENALTY_SURDEF:= 1000;
 #################################################
 # DECISION VARIABLES
 #################################################
@@ -302,28 +307,28 @@ var y2{j2 in L2}, >=0, binary; # 1, if a L-2 SCF is used
 var y3{j3 in L3}, >=0, binary; # 1, if a L-3 TCF is used
 
 # Patient flows “fluxo de ida”
-var u0_1{i in I, j1 in L1}, >=0, integer;  # The flow between demand point i and L1 (pop)
-var u1_2{j1 in L1, j2 in L2}, >=0, integer;  # The flow between L1 and L2 (pop)
-var u2_3{j2 in L2, j3 in L3}, >=0, integer;  # The flow between L2 and L3 (pop)
+var u0_1{i in I, j1 in L1}, >=0, <= W[i];  # The flow between demand point i and L1 (pop)
+var u1_2{j1 in L1, j2 in L2}, >=0, <= sum{i in I}W[i];  # The flow between L1 and L2 (pop)
+var u2_3{j2 in L2, j3 in L3}, >=0, <= sum{i in I}W[i];  # The flow between L2 and L3 (pop)
 
-var u0_2{i in I, j2 in L2} >= 0, integer;  # Casa → Clínica (bypass UBS)
-var u0_3{i in I, j3 in L3} >= 0, integer;  # Casa → Hospital (bypass UBS e clínica)
-var u1_3{j1 in L1, j3 in L3} >= 0, integer;  # UBS → Hospital (encaminhamento direto)
+var u0_2{i in I, j2 in L2} >= 0, <= W[i];  # Casa → Clínica (bypass UBS)
+var u0_3{i in I, j3 in L3} >= 0, <= W[i];  # Casa → Hospital (bypass UBS e clínica)
+var u1_3{j1 in L1, j3 in L3} >= 0, <= sum{i in I}W[i];  # UBS → Hospital (encaminhamento direto)
 
 # Fluxos de “passo inverso” (step-down)
-var u3_2{j3 in L3, j2 in L2} >= 0, integer;  # Alta hospitalar → clínica
-var u3_1{j3 in L3, j1 in L1} >= 0, integer;  # Alta hospitalar → UBS
-var u2_1{j2 in L2, j1 in L1} >= 0, integer;  # Retorno da clínica → UBS
+var u3_2{j3 in L3, j2 in L2} >= 0, <= sum{i in I}W[i];  # Alta hospitalar → clínica
+var u3_1{j3 in L3, j1 in L1} >= 0, <= sum{i in I}W[i];  # Alta hospitalar → UBS
+var u2_1{j2 in L2, j1 in L1} >= 0, <= sum{i in I}W[i];  # Retorno da clínica → UBS
 
-var u3_0{j3 in L3, i in I} >= 0, integer;  # Alta hospitalar → Casa
-var u2_0{j2 in L2, i in I} >= 0, integer;  # Retorno Clínica → Casa
-var u1_0{j1 in L1, i in I} >= 0, integer;  # Alta UBS → Casa
+var u3_0{j3 in L3, i in I} >= 0, <= W[i];  # Alta hospitalar → Casa
+var u2_0{j2 in L2, i in I} >= 0, <= W[i];  # Retorno Clínica → Casa
+var u1_0{j1 in L1, i in I} >= 0, <= W[i];  # Alta UBS → Casa
 
 
 # fluxos de telemedicina (Casa -> unidade que presta teleconsulta)
-var ut1{i in I, j1 in L1} >= 0, integer;   # tele: domicílio -> UBS (tele atendido por profissional na UBS)
-var ut2{i in I, j2 in L2} >= 0, integer;   # tele: domicílio -> Clínica (tele atendido por profissional na clínica)
-var ut3{i in I, j3 in L3} >= 0, integer;   # tele: domicílio -> Hospital (tele atendido por profissional no hospital)
+var ut1{i in I, j1 in L1} >= 0;   # tele: domicílio -> UBS (tele atendido por profissional na UBS)
+var ut2{i in I, j2 in L2} >= 0;   # tele: domicílio -> Clínica (tele atendido por profissional na clínica)
+var ut3{i in I, j3 in L3} >= 0;   # tele: domicílio -> Hospital (tele atendido por profissional no hospital)
 
 # Team variables (positive = deficit/need, negative = excess/surplus)
 var deficit1{E[1],L1}, >=0; # Deficit of professional e on location L1 (prof)
@@ -343,34 +348,34 @@ var transfer1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, integer
 var transfer2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, integer, >= 0;
 var transfer3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, integer, >= 0;
 
-var t1_int{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, >= 0;
-var t2_int{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, >= 0;
-var t3_int{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, >= 0;
+# var t1_int{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, >= 0;
+# var t2_int{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, >= 0;
+# var t3_int{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, >= 0;
 
-var f1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, >=0, <= 0.999;
-var f2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, >=0, <= 0.999;
-var f3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, >=0, <= 0.999;
+# var f1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, >=0, <= 0.99;
+# var f2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, >=0, <= 0.99;
+# var f3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, >=0, <= 0.99;
 
-s.t. T1_aux{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}: transfer1[e1,from,to] = t1_int[e1,from,to] + f1[e1,from,to];
-s.t. T2_aux{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}: transfer2[e2,from,to] = t2_int[e2,from,to] + f2[e2,from,to];
-s.t. T3_aux{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}: transfer3[e3,from,to] = t3_int[e3,from,to] + f3[e3,from,to];
+# s.t. T1_aux{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}: transfer1[e1,from,to] = t1_int[e1,from,to] + f1[e1,from,to];
+# s.t. T2_aux{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}: transfer2[e2,from,to] = t2_int[e2,from,to] + f2[e2,from,to];
+# s.t. T3_aux{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}: transfer3[e3,from,to] = t3_int[e3,from,to] + f3[e3,from,to];
 
 # New teams hired (only for candidate locations or to cover remaining deficits)
 var newhire1{E[1],L1}, integer, >= 0; # New professionals hired at L1 (prof)
 var newhire2{E[2],L2}, integer, >= 0; # New professionals hired at L2 (prof)
 var newhire3{E[3],L3}, integer, >= 0; # New professionals hired at L3 (prof)
 
-var nh1_int{E[1],L1}, >=0;
-var nh2_int{E[2],L2}, >=0;
-var nh3_int{E[3],L3}, >=0;
+# var nh1_int{E[1],L1}, >=0;
+# var nh2_int{E[2],L2}, >=0;
+# var nh3_int{E[3],L3}, >=0;
 
-var f4{E[1],L1}, >=0, <= 0.999;
-var f5{E[2],L2}, >=0, <= 0.999;
-var f6{E[3],L3}, >=0, <= 0.999;
+# var f4{E[1],L1}, >=0, <= 0.999;
+# var f5{E[2],L2}, >=0, <= 0.999;
+# var f6{E[3],L3}, >=0, <= 0.999;
 
-s.t. T4_aux{e1 in E[1], j1 in L1}: newhire1[e1,j1] = nh1_int[e1,j1] + f4[e1,j1];
-s.t. T5_aux{e2 in E[2], j2 in L2}: newhire2[e2,j2] = nh2_int[e2,j2] + f5[e2,j2];
-s.t. T6_aux{e3 in E[3], j3 in L3}: newhire3[e3,j3] = nh3_int[e3,j3] + f6[e3,j3];
+# s.t. T4_aux{e1 in E[1], j1 in L1}: newhire1[e1,j1] = nh1_int[e1,j1] + f4[e1,j1];
+# s.t. T5_aux{e2 in E[2], j2 in L2}: newhire2[e2,j2] = nh2_int[e2,j2] + f5[e2,j2];
+# s.t. T6_aux{e3 in E[3], j3 in L3}: newhire3[e3,j3] = nh3_int[e3,j3] + f6[e3,j3];
 
 var Total_Costs_APS, >=0; # Aux variable for report
 
@@ -767,12 +772,12 @@ minimize Total_Costs:
         RC3[e3]*DL3[from,to]*transfer3[e3,from,to]
 
     # Penalty for surplus or deficit
-    + sum{e1 in E[1], j1 in L1}10*CE1[e1]*surplus1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}10*CE2[e2]*surplus2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}10*CE3[e3]*surplus3[e3,j3] 
-    + sum{e1 in E[1], j1 in L1}10*CE1[e1]*deficit1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}10*CE2[e2]*deficit2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}10*CE3[e3]*deficit3[e3,j3] 
+    + sum{e1 in E[1], j1 in L1}PENALTY_SURDEF*CE1[e1]*surplus1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}PENALTY_SURDEF*CE2[e2]*surplus2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}PENALTY_SURDEF*CE3[e3]*surplus3[e3,j3] 
+    + sum{e1 in E[1], j1 in L1}PENALTY_SURDEF*CE1[e1]*deficit1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}PENALTY_SURDEF*CE2[e2]*deficit2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}PENALTY_SURDEF*CE3[e3]*deficit3[e3,j3] 
     # Variable cost per patient
     + sum{j1 in L1}VC1[j1]*(sum{i in I}u0_1[i,j1]  # Home → L1
     + sum{j2 in L2}u2_1[j2,j1]              # L2 → L1
