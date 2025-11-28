@@ -80,14 +80,14 @@ param:I:    W       IVS:=
 # # Variable cost of PHC j / patient 
 param:	SIZE	FC1		VC1:=  
 PHC1	1		1000	5
-PHC2	2		1000	5
-PHC3	2		1000	5
+PHC2	2		2000	5
+PHC3	2		2000	5
 PHC4	1		1000	5
-PHC5	2		1000	5
+PHC5	2		2000	5
 PHC6	1		1000	5
-PHC7	2		1000	5
-PHC8	3		1000	5
-PHC9	3		1000	5
+PHC7	2		2000	5
+PHC8	3		3000	5
+PHC9	3		3000	5
 PHC10	5		10000	5
 ;
 
@@ -113,7 +113,7 @@ THC6	3000	20
 
 ################################################
 # BUDGET PARAMETER
-param BUDGET := 350000; # Overall budget constraint ($/year)
+param BUDGET := 400000; # Overall budget constraint ($/year)
 ################################################
 
 # Team cost K1 ($/year)
