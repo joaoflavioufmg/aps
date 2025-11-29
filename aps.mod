@@ -149,7 +149,7 @@ param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0);
 # ############################################################################### 
 
 param W{I}; # The population size at demand point i (pop)
-param IVS{I}; # Índice de Vulnerabildade em Saude at demand point i (pop)
+param IVS{I}, default 0.5; # Índice de Vulnerabildade em Saude at demand point i (pop)
 
 
 # COUNT how many IVS[i] <= IVS[j] for each j
