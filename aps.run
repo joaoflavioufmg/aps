@@ -51,11 +51,7 @@ option gurobi_options $gurobi_options
   'outlev 1'
 #   'threads 1'
   'timing 1'
-<<<<<<< HEAD
   'timelim 600'
-=======
-  'timelim 60'
->>>>>>> 3fb8ba36fa13bf54e0f79255aeba3493810a86b3
 #   'pivtol 0.1'
 #   'intfeastol 1.e-9'
 #   'numericfocus 2'
