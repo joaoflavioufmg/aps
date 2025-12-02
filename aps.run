@@ -16,9 +16,9 @@
 # ===============================================
 reset data;
 model aps.mod;
-data aps.dat;
-# data LS.dat;
-# data LS_distdur.dat;
+# data aps.dat;
+data LS.dat;
+data LS_distdur.dat;
 
 # data data/31.dat;
 
@@ -51,7 +51,7 @@ option gurobi_options $gurobi_options
   'outlev 1'
 #   'threads 1'
   'timing 1'
-  'timelim 600'
+  'timelim 10000'
 #   'pivtol 0.1'
 #   'intfeastol 1.e-9'
 #   'numericfocus 2'
@@ -323,7 +323,7 @@ printf: "Reg     > PHC + SHC + THC  :(flow)\n";
 printf: "========================================\n";
 for{i in I}{
     # PHC
-    printf "M[%-4d] > \t : %d\n", i, W[i];
+    printf "M[%-4s] > \t : %d\n", i, W[i];
     for{j1 in L1: u0_1[i,j1] > 0}{
     printf "\t> L[%-4s]: %d\n", j1, u0_1[i,j1];}
     for{j1 in L1: ut1[i,j1] > 0}{

@@ -72,25 +72,36 @@ param RC3{E[3]} default 1; # Relocation cost for THC team ($/prof/min)
 
 # Se existir um D0_1 com fora do raio proposto, e.g. 16 km, inserir uma distância muito 
 # grande para não ser considerada no modelo
+# set OD := I cross L[1];
+# display OD;
 param D0_1{i in I,j1 in L[1]}; # := 10;    # The travel time between i and level-1 PCF.   (min)
-param D0_2{I,L[2]}:= 20000;    # The travel time between i and level-2 SCF.   (min)
-param D0_3{I,L[3]}:= 30000;    # The travel time between i and level-3 TCF.   (min)
-param D1_2{L[1],L[2]}:= 20000; # The travel time between candidate L1 and L2. (min)
-param D2_3{L[2],L[3]}:= 20000; # The travel time between candidate L2 and L3. (min)
-param D1_3{L[1],L[3]}:= 30000; # The travel time between candidate L1 and L3. (min)
+param D0_2{I,L[2]};    # The travel time between i and level-2 SCF.   (min)
+param D0_3{I,L[3]};    # The travel time between i and level-3 TCF.   (min)
+param D1_2{L[1],L[2]}; # The travel time between candidate L1 and L2. (min)
+param D1_3{L[1],L[3]}; # The travel time between candidate L1 and L3. (min)
+param D2_3{L[2],L[3]}; # The travel time between candidate L2 and L3. (min)
+
+display max{i in I,j1 in L[1]}(D0_1[i,j1]);
+display max{i in I,j2 in L[2]}(D0_2[i,j2]);
+display max{i in I,j3 in L[3]}(D0_3[i,j3]);
 
 param D1_0{j1 in L[1], i in I} := D0_1[i,j1];    # The travel time between i and level-1 PCF.   (min)
 param D2_0{j2 in L[2], i in I} := D0_2[i,j2];    # The travel time between i and level-2 SCF.   (min)
 param D3_0{j3 in L[3], i in I} := D0_3[i,j3];    # The travel time between i and level-3 TCF.   (min)
 param D2_1{j2 in L[2], j1 in L[1]} := D1_2[j1,j2]; # The travel time between candidate L1 and L2. (min)
-param D3_2{j3 in L[3], j2 in L[2]} := D2_3[j2,j3]; # The travel time between candidate L2 and L3. (min)
 param D3_1{j3 in L[3], j1 in L[1]} := D1_3[j1,j3]; # The travel time between candidate L1 and L3. (min)
+param D3_2{j3 in L[3], j2 in L[2]} := D2_3[j2,j3]; # The travel time between candidate L2 and L3. (min)
 
+# set OD := EL[1] cross L[1];
+# display OD;
 # Distance matrix between same-level facilities (for team transfer)
 param DL1{EL[1], L[1]}; # default 10; # Distance between L1 facilities (min)
-param DL2{EL[2], L[2]} default 20000; # Distance between L2 facilities (min)
-param DL3{EL[3], L[3]} default 30000; # Distance between L3 facilities (min)
+param DL2{EL[2], L[2]}; # Distance between L2 facilities (min)
+param DL3{EL[3], L[3]}; # Distance between L3 facilities (min)
 
+display max{i in EL[1],j1 in L[1]}(DL1[i,j1]);
+display max{i in EL[2],j2 in L[2]}(DL2[i,j2]);
+display max{i in EL[3],j3 in L[3]}(DL3[i,j3]);
 
 set Link1 dimen 2:= setof{i in I, j1 in L[1]: D0_1[i,j1] <= Dmax[1]}(i,j1);
 set H1:= setof{i in I,j1 in L[1]: D0_1[i,j1] <= Dmax[1]} j1;
@@ -129,14 +140,14 @@ param VC3{L[3]}; # := 0; # Variable cost of THC j / pop h ($/pop)
 
 # Fixed cost per period for operating PHC j    ($/year)
 # Fonte: https://cbc2022.abcustos.org.br/rest/artigo/98/semFolhaDeRosto/pdf?chaveDeAcessoNaoAutenticado=97827de5f831bdf92b6c6bd603308190ea2769c6
-param FC1{L[1]} default 100000; # Custos administrativos: 100 mil/ano ($/year): Dado de 2022 ajustado pela inflação
+param FC1{L[1]}; # 100000; # Custos administrativos: 100 mil/ano ($/year): Dado de 2022 ajustado pela inflação
 param FC2{L[2]}; # := 0; # Fixed cost per period for operating SHC j    ($/year)
 param FC3{L[3]}; # := 0; # Fixed cost per period for operating THC j    ($/year)
 
 # ############## Amortização anual para Investimento em nova UBS ############## 
 param R:=0.10;   # Taxa de desconto anual
 param N:=20;     # Vida útil (anos)
-param I_L1:= 1000; # 3818078; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
+param I_L1; # 1000; # 3818078; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
 # Fonte: https://www.gov.br/saude/pt-br/assuntos/novo-pac-saude/unidades-basicas-de-saude/faq-ubs/analise-habilitacao-e-selecao-das-propostas/valores-para-construcao-de-nova-ubs
 param I_L2:= 0; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
 param I_L3:= 0; # Investimento (custo de implantação) na nova UBS: Obra, reforma e equipamentos
@@ -154,6 +165,9 @@ param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0);
 param W{I}; # The population size at demand point i (pop)
 param IVS{I}, default 0.5; # Índice de Vulnerabildade em Saude at demand point i (pop)
 
+#################################################################
+# Criando FAIXAS PROPORCIONAIS de IVS para cada município
+#################################################################
 
 # COUNT how many IVS[i] <= IVS[j] for each j
 # param COUNT_IVS{j in I} := sum{i in I} (IVS[i] <= IVS[j]);
@@ -171,11 +185,7 @@ param PROF_POP{i in I} :=
         else if IVS[i] <= MED_IVS then 1/3000
         else if IVS[i] <= HIG_IVS then 1/3500
         else "ERROR";
-    # if IVS[i] <= LOW_IVS then W[i]/2500
-    # else if IVS[i] <= MED_IVS then W[i]/3000
-    # else if IVS[i] <= HIG_IVS then W[i]/3500
-    # else "ERROR";
-
+    
 # # display results
 # display LOW_IVS, MED_IVS, HIG_IVS;
 
@@ -191,9 +201,6 @@ param PROP{e1 in E[1]} :=
 param MS0_1{i in I, e1 in E[1]} := PROP[e1] * PROF_POP[i];
 # display MS0_1;
 
-# param MS1{e1 in E[1]}:= if e1 = 'eSF' then 2e-2 else
-#                         if e1 = 'eSB' then 2e-2 else
-#                         if e1 = 'eMU' then 2e-2/9; 
 
 # (prof/patient)
 param PROF_PAT := 1/3000;
@@ -208,18 +215,18 @@ param CNES3{E[3],EL[3]}; # Health professional teams PHC at location L3 (prof)
 # Service operating capacity at IHC j
 # The capacity of a level-1 PCF in K. (pop)
 param C1{j1 in L[1]} := SIZE[j1]*3000; 
-param C2{L[2]} default 50000; # The capacity of a level-2 PCF in J.   (pop)
-param C3{L[3]} default 100000; # The capacity of a level-3 PCF in J.   (pop)
+param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
+param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 
-param U{K}; # The number of UNITS level-k to be established. (unit)
+
 
 # param O1{L[1]}; # The proportion of patients in a L-1 to a L-2 PCF. (%)
 # param O2{L[2]}; # The proportion of patients in a L-2 to a L-3 SCF. (%)
 
 # Primary care facility (PCF)
-param O1_0{L[1]} default 0.71; # The proportion of patients in a L-1 to a home i PCF. (%)
-param O1_2{L[1]} default 0.20; # The proportion of patients in a L-1 to a L-2 PCF. (%)
-param O1_3{L[1]} default 0.05; # The proportion of patients in a L-1 to a L-3 PCF. (%)
+param O1_0{L[1]}; # The proportion of patients in a L-1 to a home i PCF. (%)
+param O1_2{L[1]}; # The proportion of patients in a L-1 to a L-2 PCF. (%)
+param O1_3{L[1]}; # The proportion of patients in a L-1 to a L-3 PCF. (%)
 # Secondary care facility (SCF)
 param O2_0{L[2]}; # The proportion of patients in a L-2 to a home i SCF. (%)
 param O2_1{L[2]}; # The proportion of patients in a L-2 to a L-1 SCF. (%)
@@ -229,7 +236,6 @@ param O3_0{L[3]}; # The proportion of patients in a L-3 to home i TCF. (%)
 param O3_1{L[3]}; # The proportion of patients in a L-3 to a L-1 TCF. (%)
 param O3_2{L[3]}; # The proportion of patients in a L-3 to a L-2 TCF. (%)
 
-
 # # FOR GLPK, only
 # check {j1 in L[1]}: O1_0[j1] + O1_2[j1] + O1_3[j1] <= 1;
 # check {j1 in L[1]}: O1_0[j1] + O1_2[j1] + O1_3[j1] >= 0.9;
@@ -237,6 +243,21 @@ param O3_2{L[3]}; # The proportion of patients in a L-3 to a L-2 TCF. (%)
 # check {j2 in L[2]}: O2_0[j2] + O2_1[j2] + O2_3[j2] >= 0.9;
 # check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] <= 1;
 # check {j3 in L[3]}: O3_0[j3] + O3_1[j3] + O3_2[j3] >= 0.9;
+
+param U{K}; # The number of UNITS level-k to be established. (unit)
+
+
+display sum{i in I}W[i];            # Total demand for PHC
+display sum{j1 in EL[1]} C1[j1];    # Existing capacity
+display min{j1 in CL[1]}C1[j1]*U[1];    # Expansion possibility
+
+display sum{i in I}W[i] * max(max{j1 in L[1]}O1_2[j1], max{j3 in L[3]}O3_2[j3]); # Total demand for SHC
+display sum{j2 in EL[2]} C2[j2];     # Existing capacity
+display min{j2 in CL[2]} C2[j2]*U[2];     # Expansion possibility
+
+display sum{i in I}W[i] * max(max{j1 in L[1]}O1_3[j1], max{j2 in L[2]}O2_3[j2]); # Total demand for THC
+display sum{j3 in EL[3]} C3[j3];      # Existing capacity
+display min{j3 in CL[3]} C3[j3]*U[3];      # Expansion possibility
 
 # Percentual maximo de Atendimentos Telemedicina de casa > PHC, SHC, THC
 param MAX_TELE_PHC, <= 1.0;
@@ -258,12 +279,15 @@ param MinCostPerNewTHC := if card(CL[3] inter L3) > 0 then
     min{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3] + sum{c3 in E[3]}CE3[c3]) else 0;
 
 param ExistingCost := 
-    sum{j1 in EL[1] inter L1}FC1[j1] + 
-    sum{j2 in EL[2] inter L2}FC2[j2] + 
-    sum{j3 in EL[3] inter L3}FC3[j3];
+    sum{j1 in EL[1] inter L1}FC1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e] +  
+    sum{j2 in EL[2] inter L2}FC2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] + 
+    sum{j3 in EL[3] inter L3}FC3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e];
 
 # Add a check statement:
-# check: BUDGET >= ExistingCost;
+display BUDGET;
+display ExistingCost;
+
+check: BUDGET >= ExistingCost;
 
 # param AvailableBudget := max(0, BUDGET - ExistingCost);
 param AvailableBudget := BUDGET - ExistingCost;
@@ -275,24 +299,24 @@ param MaxNewSHC := if card(CL[2] inter L2) > 0 and MinCostPerNewSHC > 0 then
 param MaxNewTHC := if card(CL[3] inter L3) > 0 and MinCostPerNewTHC > 0 then 
                    min(U[3], floor(AvailableBudget / MinCostPerNewTHC)) else 0;
 
-# #  For GLPK, only
-# printf: "\n========================================\n";
-# printf: "BUDGET PREPROCESSING\n";
-# printf: "========================================\n";
-# printf: "Overall Budget:\t\t$%10.2f\n", BUDGET;
-# printf: "Existing Cost:\t\t$%10.2f\n", ExistingCost;
-# printf: "Available Budget:\t$%10.2f\n", AvailableBudget;
-# printf: "========================================\n";
-# printf: "Min Cost per New Facility:\n";
-# printf: "  PHC:\t\t\t$%10.2f\n", MinCostPerNewPHC;
-# printf: "  SHC:\t\t\t$%10.2f\n", MinCostPerNewSHC;
-# printf: "  THC:\t\t\t$%10.2f\n", MinCostPerNewTHC;
-# printf: "========================================\n";
-# printf: "Budget-Adjusted Max New Units:\n";
-# printf: "  PHC:\t\t\t%d (original: %d)\n", MaxNewPHC, U[1];
-# printf: "  SHC:\t\t\t%d (original: %d)\n", MaxNewSHC, U[2];
-# printf: "  THC:\t\t\t%d (original: %d)\n", MaxNewTHC, U[3];
-# printf: "========================================\n\n";
+#  For GLPK, only
+printf: "\n========================================\n";
+printf: "BUDGET PREPROCESSING\n";
+printf: "========================================\n";
+printf: "Overall Budget:\t\t$%10.2f\n", BUDGET;
+printf: "Existing Cost:\t\t$%10.2f\n", ExistingCost;
+printf: "Available Budget:\t$%10.2f\n", AvailableBudget;
+printf: "========================================\n";
+printf: "Min Cost per New Facility:\n";
+printf: "  PHC:\t\t\t$%10.2f\n", MinCostPerNewPHC;
+printf: "  SHC:\t\t\t$%10.2f\n", MinCostPerNewSHC;
+printf: "  THC:\t\t\t$%10.2f\n", MinCostPerNewTHC;
+printf: "========================================\n";
+printf: "Budget-Adjusted Max New Units:\n";
+printf: "  PHC:\t\t\t%d (original: %d)\n", MaxNewPHC, U[1];
+printf: "  SHC:\t\t\t%d (original: %d)\n", MaxNewSHC, U[2];
+printf: "  THC:\t\t\t%d (original: %d)\n", MaxNewTHC, U[3];
+printf: "========================================\n\n";
 
 # param M:= 10000;
 param PENALTY_SURDEF:= 1000;
@@ -364,9 +388,9 @@ var transfer3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, integer
 # s.t. T3_aux{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}: transfer3[e3,from,to] = t3_int[e3,from,to] + f3[e3,from,to];
 
 # New teams hired (only for candidate locations or to cover remaining deficits)
-var newhire1{E[1],L1}, integer, >= 0; # New professionals hired at L1 (prof)
-var newhire2{E[2],L2}, integer, >= 0; # New professionals hired at L2 (prof)
-var newhire3{E[3],L3}, integer, >= 0; # New professionals hired at L3 (prof)
+var newhire1{E[1],L1}, integer, >= 0, <= 4; # New professionals hired at L1 (prof)
+var newhire2{E[2],L2}, integer, >= 0, <= 100; # New professionals hired at L2 (prof)
+var newhire3{E[3],L3}, integer, >= 0, <= 100; # New professionals hired at L3 (prof)
 
 # var nh1_int{E[1],L1}, >=0;
 # var nh2_int{E[2],L2}, >=0;
