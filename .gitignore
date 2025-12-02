@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Large optimization files
+.mps
+
 # Distribution / packaging
 .Python
 build/
