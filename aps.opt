@@ -2,6 +2,6 @@ mip_rel_gap=1.e-3
 random_seed=5
 primal_feasibility_tolerance=1e-9
 dual_feasibility_tolerance=1e-9
-time_limit=300
+time_limit=3600
 write_solution_style=2
 solution_file=aps.sol
