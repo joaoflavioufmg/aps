@@ -1,4 +1,5 @@
 @echo off
 echo Running GLPSOL ...
-@REM call glpsol -m aps.mod -d aps.dat --mipgap 0.01 --cuts --scale --adv
-call glpsol -m aps.mod -d LS.dat -d LS_distdur.dat --mipgap 0.01 --cuts --scale --adv
+REM call glpsol -m aps.mod -d aps.dat -d 31.dat --mipgap 0.001 --cuts
+@REM call glpsol -m aps.mod -d aps.dat --mipgap 0.05 --cuts
+call glpsol -m aps.mod -d aps.dat --mipgap 0.01 --cuts --scale --adv
