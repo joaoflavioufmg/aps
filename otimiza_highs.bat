@@ -10,7 +10,7 @@ call glpsol -m aps.mod -d aps.dat --cuts --scale --adv --check --wmps aps.mps --
 
 echo Running HiGHS solver...
 @REM call highs --model_file .\aps.lp --options_file aps.opt
-call highs --model_file .\aps.mps --options_file aps.opt 
+call C:\Solvers\highs --model_file .\aps.mps --options_file aps.opt 
 
 echo Running GLPSOL again to generate solution...
 call glpsol -m aps.mod -d aps.dat -r aps.sol
