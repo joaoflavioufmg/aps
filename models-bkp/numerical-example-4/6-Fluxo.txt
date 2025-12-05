@@ -1,0 +1,250 @@
+Region	Pop	Flow
+[1             ]	1000	1000
+[2             ]	3000	2999
+[3             ]	2000	1999
+[4             ]	4000	4000
+[5             ]	1000	1000
+[6             ]	1000	999
+[7             ]	2000	1999
+[8             ]	3000	3000
+[9             ]	3000	2999
+[10            ]	2000	2000
+[11            ]	1000	1000
+[12            ]	2000	2000
+[13            ]	3000	3000
+[14            ]	4000	4000
+[15            ]	5000	4999
+
+Reg     > PHC + SHC + THC  :(flow)
+M[1   ]	1000
+	L[PHC1]	416
+	L[PHC5]	535
+	L[PHC1]*	20
+	L[PHC5]*	26
+M[2   ]	3000
+	L[PHC4]	642
+	L[PHC5]	2214
+	L[PHC4]*	32
+	L[PHC5]*	110
+M[3   ]	2000
+	L[PHC3]	384
+	L[PHC3]*	19
+	L[SHC1]	300
+	L[SHC2]	300
+	L[SHC3]	20
+	L[SHC4]	300
+	L[SHC5]	300
+	L[SHC6]	300
+	L[SHC1]*	15
+	L[SHC2]*	15
+	L[SHC3]*	1
+	L[SHC4]*	15
+	L[SHC5]*	15
+	L[SHC6]*	15
+M[4   ]	4000
+	L[PHC2]	1040
+	L[PHC3]	2769
+	L[PHC2]*	52
+	L[PHC3]*	138
+M[5   ]	1000
+	L[PHC1]	416
+	L[PHC5]	535
+	L[PHC1]*	20
+	L[PHC5]*	26
+M[6   ]	1000
+	L[PHC1]	306
+	L[PHC8]	345
+	L[PHC1]*	15
+	L[PHC8]*	17
+	L[SHC4]	150
+	L[SHC7]	150
+	L[SHC4]*	7
+	L[SHC7]*	7
+M[7   ]	2000
+	L[PHC3]	384
+	L[PHC3]*	19
+	L[SHC1]	300
+	L[SHC2]	300
+	L[SHC3]	20
+	L[SHC4]	300
+	L[SHC5]	300
+	L[SHC6]	300
+	L[SHC1]*	15
+	L[SHC2]*	15
+	L[SHC3]*	1
+	L[SHC4]*	15
+	L[SHC5]*	15
+	L[SHC6]*	15
+M[8   ]	3000
+	L[PHC2]	2857
+	L[PHC2]*	142
+M[9   ]	3000
+	L[PHC4]	642
+	L[PHC5]	2214
+	L[PHC4]*	32
+	L[PHC5]*	110
+M[10  ]	2000
+	L[PHC3]	1904
+	L[PHC3]*	95
+M[11  ]	1000
+	L[PHC8]	652
+	L[PHC8]*	32
+	L[SHC3]	150
+	L[SHC7]	150
+	L[SHC3]*	7
+	L[SHC7]*	7
+M[12  ]	2000
+	L[PHC6]	1904
+	L[PHC6]*	95
+M[13  ]	3000
+	L[PHC1]	1245
+	L[PHC2]	1514
+	L[PHC8]	97
+	L[PHC1]*	62
+	L[PHC2]*	75
+	L[PHC8]*	4
+M[14  ]	4000
+	L[PHC6]	681
+	L[PHC8]	3127
+	L[PHC6]*	34
+	L[PHC8]*	156
+M[15  ]	5000
+	L[PHC8]	3518
+	L[PHC8]*	175
+	L[SHC1]	196
+	L[SHC2]	222
+	L[SHC4]	66
+	L[SHC6]	284
+	L[SHC7]	473
+	L[SHC1]*	9
+	L[SHC2]*	11
+	L[SHC4]*	3
+	L[SHC6]*	14
+	L[SHC7]*	23
+* Teleconsulta
+
+
+PHC     > Reg + SHC + THC (dest. flow)
+L[PHC1]	2609	(2504 + 0 + 105) (Orig: Reg + SHC + THC)
+	L[1   ]	437
+	L[3   ]	51
+	L[5   ]	437
+	L[6   ]	437
+	L[7   ]	51
+	L[10  ]	51
+	L[11  ]	437
+	L[12  ]	51
+	L[SHC1]	521
+	L[THC6]	130
+L[PHC2]	5682	(5682 + 0 + 0) (Orig: Reg + SHC + THC)
+	L[2   ]	1065
+	L[8   ]	1065
+	L[9   ]	1065
+	L[13  ]	1065
+	L[SHC2]	1136
+	L[THC2]	69
+	L[THC4]	214
+L[PHC3]	5715	(5715 + 0 + 0) (Orig: Reg + SHC + THC)
+	L[2   ]	576
+	L[4   ]	989
+	L[8   ]	576
+	L[9   ]	576
+	L[13  ]	576
+	L[14  ]	989
+	L[SHC4]	1143
+	L[THC4]	285
+L[PHC4]	3000	(1350 + 1599 + 50) (Orig: Reg + SHC + THC)
+	L[1   ]	562
+	L[5   ]	562
+	L[6   ]	562
+	L[11  ]	562
+	L[SHC1]	600
+	L[THC6]	150
+L[PHC5]	5774	(5774 + 0 + 0) (Orig: Reg + SHC + THC)
+	L[2   ]	1082
+	L[8   ]	1082
+	L[9   ]	1082
+	L[13  ]	1082
+	L[SHC5]	1154
+	L[THC1]	288
+L[PHC6]	2856	(2715 + 0 + 141) (Orig: Reg + SHC + THC)
+	L[3   ]	535
+	L[7   ]	535
+	L[10  ]	535
+	L[12  ]	535
+	L[SHC6]	571
+	L[THC2]	142
+L[PHC8]	9000	(8129 + 870 + 0) (Orig: Reg + SHC + THC)
+	L[2   ]	274
+	L[3   ]	1412
+	L[7   ]	1412
+	L[8   ]	274
+	L[9   ]	274
+	L[10  ]	1412
+	L[12  ]	1412
+	L[13  ]	274
+	L[SHC3]	1800
+	L[THC6]	450
+
+
+SHC     > Reg + PHC + THC (dest. flow)
+L[SHC1]	2000	(836 + 1121 + 41) (Orig: Reg + PHC + THC)
+	L[15  ]	1400
+	L[PHC4]	400
+	L[THC1]	200
+L[SHC2]	2000	(863 + 1136 + 0) (Orig: Reg + PHC + THC)
+	L[4   ]	700
+	L[14  ]	700
+	L[PHC8]	400
+	L[THC2]	200
+L[SHC3]	2000	(200 + 1800 + 0) (Orig: Reg + PHC + THC)
+	L[4   ]	221
+	L[14  ]	221
+	L[15  ]	956
+	L[PHC4]	400
+	L[THC3]	200
+L[SHC4]	2000	(856 + 1143 + 0) (Orig: Reg + PHC + THC)
+	L[15  ]	1400
+	L[PHC4]	400
+	L[THC3]	15
+	L[THC6]	184
+L[SHC5]	1998	(630 + 1154 + 213) (Orig: Reg + PHC + THC)
+	L[4   ]	699
+	L[14  ]	699
+	L[PHC4]	399
+	L[THC3]	199
+L[SHC6]	1500	(928 + 571 + 0) (Orig: Reg + PHC + THC)
+	L[4   ]	525
+	L[14  ]	525
+	L[PHC8]	300
+	L[THC1]	150
+L[SHC7]	854	(812 + 0 + 41) (Orig: Reg + PHC + THC)
+	L[4   ]	298
+	L[14  ]	298
+	L[PHC8]	170
+	L[THC6]	85
+
+
+THC     > Reg + PHC + SHC (dest. flow)
+L[THC1]	638	(0 + 288 + 350) (Orig: Reg + PHC + SHC)
+	L[15  ]	510
+	L[PHC1]	63
+	L[SHC5]	63
+L[THC2]	412	(0 + 212 + 200) (Orig: Reg + PHC + SHC)
+	L[4   ]	165
+	L[14  ]	165
+	L[PHC6]	41
+	L[SHC1]	41
+L[THC3]	415	(0 + 0 + 415) (Orig: Reg + PHC + SHC)
+	L[15  ]	332
+	L[PHC1]	41
+	L[SHC7]	41
+L[THC4]	500	(0 + 500 + 0) (Orig: Reg + PHC + SHC)
+	L[15  ]	400
+	L[PHC4]	50
+	L[SHC5]	50
+L[THC6]	999	(0 + 730 + 269) (Orig: Reg + PHC + SHC)
+	L[4   ]	400
+	L[14  ]	400
+	L[PHC6]	100
+	L[SHC5]	100

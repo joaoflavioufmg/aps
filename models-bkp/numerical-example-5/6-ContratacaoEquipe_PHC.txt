@@ -1,0 +1,2 @@
+Location	Team	Qty
+[PHC8]*	eSB	2.00

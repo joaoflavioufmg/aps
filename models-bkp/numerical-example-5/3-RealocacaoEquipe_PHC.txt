@@ -1,0 +1,7 @@
+From	To	Team	Qty	Dist
+[PHC1]	[PHC2]	eSF	1.00	10
+[PHC1]	[PHC8]	eSF	2.00	10
+[PHC3]	[PHC8]	eSF	1.00	10
+[PHC2]	[PHC5]	eSB	1.00	10
+[PHC4]	[PHC3]	eSB	1.00	10
+[PHC4]	[PHC8]	eSB	1.00	10

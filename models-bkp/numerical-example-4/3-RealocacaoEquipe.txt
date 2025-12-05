@@ -1,0 +1,35 @@
+
+PHC Team Transfers:
+From	To	Team	Qty	Dist
+[PHC1]	[PHC2]	eSF 	1.00	10
+[PHC1]	[PHC8]	eSF 	1.00	10
+[PHC3]	[PHC4]	eSF 	1.00	10
+[PHC3]	[PHC8]	eSF 	1.00	10
+[PHC4]	[PHC8]	eSF 	1.00	10
+[PHC2]	[PHC5]	eSB 	1.00	10
+[PHC4]	[PHC8]	eSB 	3.00	10
+
+
+
+SHC Team Transfers:
+From	To	Team	Qty	Dist
+[SHC2]	[SHC5]	ME2 	1.00	20
+[SHC3]	[SHC7]	ME2 	1.00	20
+[SHC4]	[SHC6]	ME2 	1.00	20
+[SHC1]	[SHC5]	EF2 	1.00	20
+[SHC1]	[SHC7]	EF2 	1.00	20
+[SHC3]	[SHC6]	EF2 	1.00	20
+[SHC1]	[SHC5]	DE2 	1.00	20
+[SHC1]	[SHC7]	DE2 	1.00	20
+[SHC4]	[SHC6]	DE2 	1.00	20
+
+
+
+THC Team Transfers:
+From	To	Team	Qty	Dist
+[THC1]	[THC6]	ME3 	1.00	25
+[THC2]	[THC4]	ME3 	1.00	25
+[THC3]	[THC4]	EF3 	1.00	25
+[THC3]	[THC6]	EF3 	1.00	25
+[THC2]	[THC4]	DE3 	1.00	25
+[THC3]	[THC6]	DE3 	1.00	25

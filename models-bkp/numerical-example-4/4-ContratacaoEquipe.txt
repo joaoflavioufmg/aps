@@ -1,0 +1,15 @@
+Location	Team	Qty
+PHC New Hires:
+Location	Team	Qty
+[PHC3 ] 	eSB 	1.00
+[PHC4 ] 	eSB 	1.00
+
+
+
+SHC New Hires:
+Location	Team	Qty
+
+
+
+THC New Hires:
+Location	Team	Qty

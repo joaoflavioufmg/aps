@@ -1,0 +1,4 @@
+New Units:	Qty	Max	Use (%)
+PHC:	1	2	50.00%
+SHC:	3	3	100.00%
+THC :	2	2	100.00%
