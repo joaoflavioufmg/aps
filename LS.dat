@@ -1700,12 +1700,12 @@ param CNES1(tr):	eSF	eSB	eMulti:=
 
 param CNES2
 :	SHC1 :=
-EQ2	3	
+EQ2	10	
 ;									
 
 param CNES3
 :	THC1 :=
-EQ3 2	
+EQ3 10	
 ;							
 
 param C2:=
