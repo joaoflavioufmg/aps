@@ -221,7 +221,13 @@ param C1{j1 in L[1]} := SIZE[j1]*3000;
 param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
 param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 
+param MAX_NEW_HIRE1{e1 in E[1], j1 in L[1]} := ceil(C1[j1]*MS1[e1]);
+param MAX_NEW_HIRE2{e2 in E[2], j2 in L[2]} := ceil(C2[j2]*MS2[e2]);
+param MAX_NEW_HIRE3{e3 in E[3], j3 in L[3]} := ceil(C3[j3]*MS3[e3]);
 
+# display MAX_NEW_HIRE1;
+# display MAX_NEW_HIRE2;
+# display MAX_NEW_HIRE3;
 
 # param O1{L[1]}; # The proportion of patients in a L-1 to a L-2 PCF. (%)
 # param O2{L[2]}; # The proportion of patients in a L-2 to a L-3 SCF. (%)
@@ -376,17 +382,18 @@ var ut2{i in I, j2 in L2} >= 0;   # tele: domicílio -> Clínica (tele atendido 
 var ut3{i in I, j3 in L3} >= 0;   # tele: domicílio -> Hospital (tele atendido por profissional no hospital)
 
 # Team variables (positive = deficit/need, negative = excess/surplus)
-var deficit1{E[1],L1}, >=0; # Deficit of professional e on location L1 (prof)
-var deficit2{E[2],L2}, >=0; # Deficit of professional e on location L2 (prof)
-var deficit3{E[3],L3}, >=0; # Deficit of professional e on location L3 (prof)
+var deficit1{E[1], L1}, >=0, <= 1; # Deficit of professional e on location L1 (prof)
+var deficit2{E[2], L2}, >=0, <= 1; # Deficit of professional e on location L2 (prof)
+var deficit3{E[3], L3}, >=0, <= 1; # Deficit of professional e on location L3 (prof)
 
 # var surplus1{E[1],EL[1] inter L1}, >= 0; # Surplus of prof e at existing L1 (prof)
 # var surplus2{E[2],EL[2] inter L2}, >= 0; # Surplus of prof e at existing L2 (prof)
 # var surplus3{E[3],EL[3] inter L3}, >= 0; # Surplus of prof e at existing L3 (prof)
 
-var surplus1{E[1],j1 in L1}, >= 0; # Surplus of prof e at existing L1 (prof)
-var surplus2{E[2],j2 in L2}, >= 0; # Surplus of prof e at existing L2 (prof)
-var surplus3{E[3],j3 in L3}, >= 0; # Surplus of prof e at existing L3 (prof)
+var surplus1{E[1], L1}, >= 0; # Surplus of prof e at existing L1 (prof)
+var surplus2{E[2], L2}, >= 0; # Surplus of prof e at existing L2 (prof)
+var surplus3{E[3], L3}, >= 0; # Surplus of prof e at existing L3 (prof)
+
 
 # Team transfer variables (from existing location to any location with deficit)
 var transfer1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, integer, >= 0;
@@ -406,9 +413,11 @@ var transfer3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, integer
 # s.t. T3_aux{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}: transfer3[e3,from,to] = t3_int[e3,from,to] + f3[e3,from,to];
 
 # New teams hired (only for candidate locations or to cover remaining deficits)
-var newhire1{E[1],L1}, integer, >= 0, <= 4; # New professionals hired at L1 (prof)
-var newhire2{E[2],L2}, integer, >= 0, <= 100; # New professionals hired at L2 (prof)
-var newhire3{E[3],L3}, integer, >= 0, <= 100; # New professionals hired at L3 (prof)
+# New professionals hired at L1, L2, L3 (prof)
+var newhire1{e1 in E[1], j1 in L1}, integer, >= 0, <= MAX_NEW_HIRE1[e1,j1]; 
+var newhire2{e2 in E[2], j2 in L2}, integer, >= 0, <= MAX_NEW_HIRE2[e2,j2]; 
+var newhire3{e3 in E[3], j3 in L3}, integer, >= 0, <= MAX_NEW_HIRE3[e3,j3]; 
+
 
 # var nh1_int{E[1],L1}, >=0;
 # var nh2_int{E[2],L2}, >=0;
@@ -428,11 +437,26 @@ var Total_Costs_APS, >=0; # Aux variable for report
 #################################################
 # CONSTRAINTS
 #################################################
-
 # Fix variables of EXISTING locations (they must remain open)
 s.t. F1{j1 in EL[1] inter L1}: y1[j1] = 1; 
 s.t. F2{j2 in EL[2] inter L2}: y2[j2] = 1; 
 s.t. F3{j3 in EL[3] inter L3}: y3[j3] = 1;
+
+# Maximum surplus of prof e at existing L (prof): Surplus can not exceed CNEs
+s.t. Surplus1LimEx{e1 in E[1],j1 in EL[1]}: surplus1[e1,j1] <= CNES1[e1,j1]; 
+s.t. Surplus2LimEx{e2 in E[2],j2 in EL[2]}: surplus2[e2,j2] <= CNES2[e2,j2]; 
+s.t. Surplus3LimEx{e3 in E[3],j3 in EL[3]}: surplus3[e3,j3] <= CNES3[e3,j3]; 
+
+
+# #################################################################
+# # High Service Level! : New hire in case of minimum deficit. 
+# # (Problem becomes very difficult or infeasible)
+# # Medium Service Level: Deactivate this constraint
+# #################################################################
+# s.t. NewHire1_HighSL{e1 in E[1],j1 in EL[1]}: deficit1[e1,j1] <= newhire1[e1,j1];
+# s.t. NewHire2_HighSL{e2 in E[2],j2 in EL[2]}: deficit2[e2,j2] <= newhire2[e2,j2];
+# s.t. NewHire3_HighSL{e3 in E[3],j3 in EL[3]}: deficit3[e3,j3] <= newhire3[e3,j3];
+
 
 # Population assignment
 
