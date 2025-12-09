@@ -1,2 +1,1 @@
 Location	Team	Qty
-[PHC10]*	eSB	1.00
