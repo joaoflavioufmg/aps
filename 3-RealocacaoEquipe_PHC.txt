@@ -1,9 +1,7 @@
 From	To	Team	Qty	Dist (km)
-[PHC1]	[PHC7]*	eSF	2.00	3.61
-[PHC1]	[PHC10]*	eSF	1.00	5.94
-[PHC5]	[PHC10]*	eSF	2.00	9.21
-[PHC2]	[PHC7]*	eSB	2.00	10.40
+[PHC1]	[PHC10]*	eSF	3.00	5.94
+[PHC5]	[PHC10]*	eSF	1.00	9.21
+[PHC2]	[PHC8]*	eSB	2.00	2.19
 [PHC4]	[PHC10]*	eSB	2.00	29.00
-[PHC5]	[PHC10]*	eSB	1.00	9.21
-[PHC1]	[PHC7]*	eMulti	1.00	3.61
-[PHC6]	[PHC10]*	eMulti	1.00	6.03
+[PHC1]	[PHC8]*	eMulti	1.00	16.82
+[PHC4]	[PHC10]*	eMulti	1.00	29.00
