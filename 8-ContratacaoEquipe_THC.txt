@@ -1,1 +1,3 @@
 Location	Team	Qty
+[THC1]	DE3	1.00
+[THC3]	EF3	1.00

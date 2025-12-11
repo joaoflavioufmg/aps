@@ -463,14 +463,14 @@ s.t. Surplus2LimEx{e2 in E[2],j2 in EL[2] inter L2}: surplus2[e2,j2] <= CNES2[e2
 s.t. Surplus3LimEx{e3 in E[3],j3 in EL[3] inter L3}: surplus3[e3,j3] <= CNES3[e3,j3]; 
 
 
-# # #################################################################
-# # # High Service Level! : New hire in case of minimum deficit. 
-# # # (Problem becomes very difficult or infeasible)
-# # # Medium Service Level: Deactivate this constraint
-# # #################################################################
-# s.t. NewHire1_HighSL{e1 in E[1],j1 in EL[1]}: deficit1[e1,j1] <= newhire1[e1,j1];
-# s.t. NewHire2_HighSL{e2 in E[2],j2 in EL[2]}: deficit2[e2,j2] <= newhire2[e2,j2];
-# s.t. NewHire3_HighSL{e3 in E[3],j3 in EL[3]}: deficit3[e3,j3] <= newhire3[e3,j3];
+# #################################################################
+# # High Service Level! : New hire in case of minimum deficit. 
+# # (Problem becomes very difficult or infeasible)
+# # Medium Service Level: Deactivate this constraint
+# #################################################################
+s.t. NewHire1_HighSL{e1 in E[1]}: sum{j1 in EL[1]} deficit1[e1,j1] <= sum{j1 in EL[1]} newhire1[e1,j1];
+s.t. NewHire2_HighSL{e2 in E[2]}: sum{j2 in EL[2]} deficit2[e2,j2] <= sum{j2 in EL[2]} newhire2[e2,j2];
+s.t. NewHire3_HighSL{e3 in E[3]}: sum{j3 in EL[3]} deficit3[e3,j3] <= sum{j3 in EL[3]} newhire3[e3,j3];
 
 
 # Population assignment
@@ -482,7 +482,7 @@ s.t. R0a{i in I}:
     + sum{j2 in L2}y0_2[i,j2]
     + sum{j3 in L3}y0_3[i,j3] = 1;
 
-# Patients assigned to closest health unit
+# # Patients assigned to closest health unit
 # s.t. R0b{i in I, j1 in L1}: sum{k1 in L1: D0_1[i,k1]>D0_1[i,j1]}y0_1[i,k1] + y1[j1] <= 1;
 # s.t. R0c{i in I, j2 in L2}: sum{k2 in L2: D0_2[i,k2]>D0_2[i,j2]}y0_2[i,k2] + y2[j2] <= 1;
 # s.t. R0d{i in I, j3 in L3}: sum{k3 in L3: D0_3[i,k3]>D0_3[i,j3]}y0_3[i,k3] + y3[j3] <= 1;
@@ -705,7 +705,8 @@ s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
 s.t. SurplusLimit1{e1 in E[1], j1 in EL[1] inter L1}:
     surplus1[e1,j1] <= CNES1[e1,j1];
 
-
+# Teams transferred OUT <= CNES
+s.t. TransfOut1_lt_CNES{e1 in E[1], j1 in EL[1], to in L1: to != j1}: transfer1[e1,j1,to] <= CNES1[e1,j1]; 
 
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 2 (SHC)
@@ -730,6 +731,10 @@ s.t. TeamBalance2c{j2 in CL[2] inter L2, e2 in E[2]}:
 s.t. SurplusLimit2{e2 in E[2], j2 in EL[2] inter L2}:
     surplus2[e2,j2] <= CNES2[e2,j2];
 
+# Teams transferred OUT <= CNES
+s.t. TransfOut2_lt_CNES{e2 in E[2], j2 in EL[2], to in L2: to != j2}: transfer2[e2,j2,to] <= CNES2[e2,j2]; 
+
+
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 3 (THC)
 #################################################
@@ -753,6 +758,8 @@ s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}:
 s.t. SurplusLimit3{e3 in E[3], j3 in EL[3] inter L3}:
     surplus3[e3,j3] <= CNES3[e3,j3];
 
+# Teams transferred OUT <= CNES
+s.t. TransfOut3_lt_CNES{e3 in E[3], j3 in EL[3], to in L3: to != j3}: transfer3[e3,j3,to] <= CNES3[e3,j3]; 
 
 #################################################
 # CAPACITY CONSTRAINTS
@@ -990,7 +997,8 @@ printf: "Variable Cost:\t\t$%10.2f\n",
     + sum{i in I} ut3[i,j3]);                # Telehealth in L3 
 printf: "========================================\n";
 printf: "Total     Cost:\t\t$%10.2f\n", 
-Total_Costs 
+Total_Costs
+# If GLPK or Highs...(add this constant value)
 + (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
