@@ -1,5 +1,6 @@
 Location	Team	Qty
+[PHC1]	eMulti	1.00
 [PHC2]	eSF	1.00
-[PHC6]	eMulti	1.00
-[PHC10]*	eSF	2.00
-[PHC10]*	eSB	3.00
+[PHC2]	eSB	1.00
+[PHC4]	eSF	1.00
+[PHC6]	eSB	1.00

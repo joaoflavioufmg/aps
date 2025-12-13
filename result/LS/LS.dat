@@ -23,9 +23,9 @@ param I_L1 := 3818078;
 # Health care levels (PHC, SHC, THC)
 # Maximal distance for each level
 param: K: Dmax :=
-1         20000 # PHC: Primary health care (basic care)
-2         40000 # SHC: Secondary health care (intermediate care)
-3         55000 # THC: Tertiary health care (hospital care)
+1         5000 # PHC: Primary health care (basic care)
+2         30000 # SHC: Secondary health care (intermediate care)
+3         35000 # THC: Tertiary health care (hospital care)
 ;
 
 
@@ -77,7 +77,7 @@ set EL[3] := THC1;
 # of type p at demand point i and 
 # vulnerability V (the higher vulnerability, the worse)	
 # id_setor	populacao	IVS
-param: I: W   IVS:=	
+param: I:       W   IVS:=	
 313760105000002	253	0.423
 313760105000003	332	0.437
 313760105000004	0	.
