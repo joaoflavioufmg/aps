@@ -49,9 +49,9 @@ param CE2{c2 in E[2]}; # Team cost K2 ($/year)
 param CE3{c3 in E[3]}; # Team cost K3 ($/year)
 
 # Team relocation cost (per professional per distance unit)
-param RC1{E[1]} default 1; # Relocation cost for PHC team ($/prof/min)
-param RC2{E[2]} default 1; # Relocation cost for SHC team ($/prof/min)
-param RC3{E[3]} default 1; # Relocation cost for THC team ($/prof/min)
+param RC1{E[1]} default 20; # Relocation cost for PHC team ($/prof/min)
+param RC2{E[2]} default 20; # Relocation cost for SHC team ($/prof/min)
+param RC3{E[3]} default 20; # Relocation cost for THC team ($/prof/min)
 
 
 # Se existir um D0_1 com fora do raio proposto, e.g. 16 km, inserir uma distância muito 
@@ -116,7 +116,7 @@ param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 set Link01 := { (i,j1) in I cross L[1]: D0_1[i,j1] <= Dmax[1] and C1[j1] >= W[i] };
 set Link10 := { (j1,i) in L[1] cross I: D1_0[j1,i] <= Dmax[1] and C1[j1] >= W[i] };
 
-display card(Link01);
+# display card(Link01);
 # display{i in I, j1 in L[1]: (i,j1) in Link01} D0_1[i,j1], W[i], C1[j1];
 
 set Link02 dimen 2:= setof{i in I, j2 in L[2]: D0_2[i,j2] <= Dmax[2]}(i,j2);
@@ -481,11 +481,17 @@ var transfer2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, integer
 var transfer3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, integer, >= 0;
 
 
+# Variables (add to variable section)
+var HasTransferOut1{e1 in E[1], j1 in EL[1] inter L1}, binary;
+var HasTransferOut2{e2 in E[2], j2 in EL[2] inter L2}, binary;
+var HasTransferOut3{e3 in E[3], j3 in EL[3] inter L3}, binary;
+
 # New teams hired (only for candidate locations or to cover remaining deficits)
 # New professionals hired at L1, L2, L3 (prof)
 var newhire1{e1 in E[1], j1 in L1}, integer, >= 0, <= MAX_NEW_HIRE1[e1,j1]; 
 var newhire2{e2 in E[2], j2 in L2}, integer, >= 0, <= MAX_NEW_HIRE2[e2,j2]; 
 var newhire3{e3 in E[3], j3 in L3}, integer, >= 0, <= MAX_NEW_HIRE3[e3,j3]; 
+
 
 
 var Total_Costs_APS, >=0; # Aux variable for report
@@ -505,14 +511,15 @@ s.t. Surplus2LimEx{e2 in E[2],j2 in EL[2] inter L2}: surplus2[e2,j2] <= CNES2[e2
 s.t. Surplus3LimEx{e3 in E[3],j3 in EL[3] inter L3}: surplus3[e3,j3] <= CNES3[e3,j3]; 
 
 
-# #################################################################
-# # High Service Level! : New hire in case of minimum deficit. 
-# # (Problem becomes very difficult or infeasible)
-# # Medium Service Level: Deactivate this constraint
-# #################################################################
-s.t. NewHire1_HighSL{e1 in E[1]}: sum{j1 in EL[1]} deficit1[e1,j1] <= sum{j1 in EL[1]} newhire1[e1,j1];
-s.t. NewHire2_HighSL{e2 in E[2]}: sum{j2 in EL[2]} deficit2[e2,j2] <= sum{j2 in EL[2]} newhire2[e2,j2];
-s.t. NewHire3_HighSL{e3 in E[3]}: sum{j3 in EL[3]} deficit3[e3,j3] <= sum{j3 in EL[3]} newhire3[e3,j3];
+# # #################################################################
+# # # High Service Level! : New hire in case of minimum deficit. 
+# # # (Problem becomes very difficult or infeasible)
+# # # Medium Service Level: Deactivate this constraint
+# # # Deficit can be covered by hiring OR by receiving transfers
+# # #################################################################
+# s.t. NewHire1_HighSL{e1 in E[1]}: sum{j1 in EL[1]} deficit1[e1,j1] <= sum{j1 in EL[1]} newhire1[e1,j1];
+# s.t. NewHire2_HighSL{e2 in E[2]}: sum{j2 in EL[2]} deficit2[e2,j2] <= sum{j2 in EL[2]} newhire2[e2,j2];
+# s.t. NewHire3_HighSL{e3 in E[3]}: sum{j3 in EL[3]} deficit3[e3,j3] <= sum{j3 in EL[3]} newhire3[e3,j3];
 
 
 # Population assignment
@@ -698,6 +705,50 @@ s.t. DirectedTransfer3{e3 in E[3], from in EL[3] inter L3, to in L3:
 
 
 #################################################
+# PREVENT CHAIN TRANSFERS (Transitive Reduction)
+#################################################
+# If location A transfers to B, and B transfers to C, 
+# then A should transfer directly to C instead
+# This prevents: A→B→C and enforces: A→C
+
+# Completely prohibit A→B→C patterns
+s.t. NoChainTransfer1_Strong{e1 in E[1], 
+                              source in EL[1] inter L1, 
+                              intermediate in EL[1] inter L1, 
+                              destination in L1: 
+                              source != intermediate and 
+                              intermediate != destination and 
+                              source != destination and
+                              ITEM1[source] < ITEM1[intermediate] and
+                              ITEM1[intermediate] < ITEM1[destination]}:
+    transfer1[e1,source,intermediate] + transfer1[e1,intermediate,destination] <= 1;
+
+
+# Completely prohibit A→B→C patterns
+s.t. NoChainTransfer2_Strong{e2 in E[2], 
+                              source in EL[2] inter L2, 
+                              intermediate in EL[2] inter L2, 
+                              destination in L2: 
+                              source != intermediate and 
+                              intermediate != destination and 
+                              source != destination and
+                              ITEM2[source] < ITEM2[intermediate] and
+                              ITEM2[intermediate] < ITEM2[destination]}:
+    transfer2[e2,source,intermediate] + transfer2[e2,intermediate,destination] <= 1;
+
+# Completely prohibit A→B→C patterns
+s.t. NoChainTransfer3_Strong{e3 in E[3], 
+                              source in EL[3] inter L3, 
+                              intermediate in EL[3] inter L3, 
+                              destination in L3: 
+                              source != intermediate and 
+                              intermediate != destination and 
+                              source != destination and
+                              ITEM3[source] < ITEM3[intermediate] and
+                              ITEM3[intermediate] < ITEM3[destination]}:
+    transfer3[e3,source,intermediate] + transfer3[e3,intermediate,destination] <= 1;
+
+#################################################
 # Strict: Incoming XOR Outgoing (not both)
 #################################################
 # "You can only send out teams if you haven't received any teams in."
@@ -742,7 +793,6 @@ s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
     + newhire1[e1,j1]  # New teams hired
     = surplus1[e1,j1] - deficit1[e1,j1];
 
-
 # For CANDIDATE locations: only new hires and transfers IN
 s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
     # Required teams
@@ -757,6 +807,27 @@ s.t. SurplusLimit1{e1 in E[1], j1 in EL[1] inter L1}:
 
 # Teams transferred OUT <= CNES
 s.t. TransfOut1_lt_CNES{e1 in E[1], j1 in EL[1], to in L1: to != j1}: transfer1[e1,j1,to] <= CNES1[e1,j1]; 
+
+
+
+# We can not transfer OUT and Hire teams
+# Constraints for Level 1 (PHC)
+#################################################
+# PREVENT TRANSFER-OUT + HIRE-BACK PATTERN
+#################################################
+# If location j transfers OUT team e, it should NOT hire new team e
+# Instead, hire directly at the destination
+# Prevents: PHC1→PHC10 (transfer) + hire at PHC1
+# Enforces: hire at PHC10 directly
+s.t. DetectTransferOut1a{e1 in E[1], j1 in EL[1] inter L1}:
+    sum{to in L1: to != j1}transfer1[e1,j1,to] >= 0.01 * HasTransferOut1[e1,j1];
+
+s.t. DetectTransferOut1b{e1 in E[1], j1 in EL[1] inter L1}:
+    sum{to in L1: to != j1}transfer1[e1,j1,to] <= CNES1[e1,j1] * HasTransferOut1[e1,j1];
+
+s.t. NoHireIfTransferOut1{e1 in E[1], j1 in EL[1] inter L1}:
+    newhire1[e1,j1] <= MAX_NEW_HIRE1[e1,j1] * (1 - HasTransferOut1[e1,j1]);
+# surplus1[e1,j1] +
 
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 2 (SHC)
@@ -785,6 +856,17 @@ s.t. SurplusLimit2{e2 in E[2], j2 in EL[2] inter L2}:
 s.t. TransfOut2_lt_CNES{e2 in E[2], j2 in EL[2], to in L2: to != j2}: transfer2[e2,j2,to] <= CNES2[e2,j2]; 
 
 
+# Constraints for Level 2 (SHC)
+s.t. DetectTransferOut2a{e2 in E[2], j2 in EL[2] inter L2}:
+    sum{to in L2: to != j2}transfer2[e2,j2,to] >= HasTransferOut2[e2,j2];
+
+s.t. DetectTransferOut2b{e2 in E[2], j2 in EL[2] inter L2}:
+    sum{to in L2: to != j2}transfer2[e2,j2,to] <= CNES2[e2,j2] * HasTransferOut2[e2,j2];
+
+s.t. NoHireIfTransferOut2{e2 in E[2], j2 in EL[2] inter L2}:
+    newhire2[e2,j2] <= MAX_NEW_HIRE2[e2,j2] * (1 - HasTransferOut2[e2,j2]);
+
+
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 3 (THC)
 #################################################
@@ -810,6 +892,17 @@ s.t. SurplusLimit3{e3 in E[3], j3 in EL[3] inter L3}:
 
 # Teams transferred OUT <= CNES
 s.t. TransfOut3_lt_CNES{e3 in E[3], j3 in EL[3], to in L3: to != j3}: transfer3[e3,j3,to] <= CNES3[e3,j3]; 
+
+
+# Constraints for Level 3 (THC)
+s.t. DetectTransferOut3a{e3 in E[3], j3 in EL[3] inter L3}:
+    sum{to in L3: to != j3}transfer3[e3,j3,to] >= HasTransferOut3[e3,j3];
+
+s.t. DetectTransferOut3b{e3 in E[3], j3 in EL[3] inter L3}:
+    sum{to in L3: to != j3}transfer3[e3,j3,to] <= CNES3[e3,j3] * HasTransferOut3[e3,j3];
+
+s.t. NoHireIfTransferOut3{e3 in E[3], j3 in EL[3] inter L3}:
+    newhire3[e3,j3] <= MAX_NEW_HIRE3[e3,j3] * (1 - HasTransferOut3[e3,j3]);
 
 #################################################
 # CAPACITY CONSTRAINTS
@@ -916,13 +1009,21 @@ s.t. APSCost: Total_Costs_APS =
     + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]
     + sum{i in I: (i,j3) in Link03} ut3[i,j3])
     # NO patients Transportation costs  
-    # Re-assignment costs
+    # Re-assignment costs:  Transfer IN
     + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
          RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
          RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to];
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
+    # Re-assignment costs:  Transfer OUT
+    + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
+    + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
+    + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to]
+         ;
     # NO Penalty for surplus or deficit
 
 
@@ -950,9 +1051,33 @@ minimize Total_Costs:
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]    
     # Cost of NEW teams hired    
-    + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1]
-    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2]
-    + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
+    # + sum{j1 in L1, e1 in E[1]}CE1[e1]*newhire1[e1,j1]
+    # + sum{j2 in L2, e2 in E[2]}CE2[e2]*newhire2[e2,j2]
+    # + sum{j3 in L3, e3 in E[3]}CE3[e3]*newhire3[e3,j3]
+    + sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
+    - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
+    + newhire1[e1,j1])  # New teams hired
+    + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
+    + newhire1[e1,j1])  # New teams hired
+
+    + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
+    - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
+    + newhire2[e2,j2]) # New teams hired
+    + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
+    + newhire2[e2,j2]) # New teams hired
+	
+    + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
+    - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
+    + newhire3[e3,j3]) # New teams hired
+    + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
+    + newhire3[e3,j3]) # New teams hired
+
     # Variable cost per patient
     + sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
@@ -967,18 +1092,22 @@ minimize Total_Costs:
     + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]              # L2 → L2
     + sum{i in I: (i,j3) in Link03} ut3[i,j3])                # Telehealth in L3  
 
-    # Team relocation costs
+    # Re-assignment costs:  Transfer IN
     + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-        #  (RC1[e1]*DL1[from,to]*transfer1[e1,from,to] + M*f1[e1,from,to])
-        RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
-    
+         RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-        #  (RC2[e2]*DL2[from,to]*transfer2[e2,from,to] + M*f2[e2,from,to])
-        RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
-    
+         RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-        #  (RC3[e3]*DL3[from,to]*transfer3[e3,from,to] + M*f3[e3,from,to])
-        RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
+    # Re-assignment costs:  Transfer OUT
+    + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
+    + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
+    + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to]
+    
+
     # Penalty for surplus or deficit 
     + sum{e1 in E[1], j1 in L1}P1*surplus1[e1,j1] 
     + sum{e2 in E[2], j2 in L2}P2*surplus2[e2,j2] 
@@ -1025,12 +1154,20 @@ printf: "New team cost:\t\t$%10.2f\n",
     + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
     + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3];
 printf: "Team relocation cost:\t$%10.2f\n",
-      sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
+     # Re-assignment costs:  Transfer IN
+    sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
          RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
          RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to];
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
+    # Re-assignment costs:  Transfer OUT
+    + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
+    + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
+    + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to];
 printf: "Variable Cost:\t\t$%10.2f\n",
     # Variable cost per patient
     sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
@@ -1487,12 +1624,20 @@ printf: "New team cost:\t%.2f\n",
     + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
     + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3] >> Financeiro;
 printf: "Team relocation cost:\t%.2f\n",
-      sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
+    # Re-assignment costs:  Transfer IN
+    sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
          RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
          RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to] >> Financeiro;
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
+    # Re-assignment costs:  Transfer OUT
+    + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
+    + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
+    + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to] >> Financeiro;
 printf: "Variable Cost:\t%.2f\n",     
     # Variable cost per patient
     sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
@@ -1903,7 +2048,6 @@ if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum
 printf: "========================================\n\n";
 
 ########################################################################
-
 end;
 
 

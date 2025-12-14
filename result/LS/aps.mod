@@ -101,8 +101,23 @@ param DL3{EL[3], L[3]} default (sum{e1 in EL[1], j1 in L[1]} DL1[e1,j1]) / (card
 # display min{i in EL[3],j3 in L[3]}(DL3[i,j3]);
 # display max{i in EL[3],j3 in L[3]}(DL3[i,j3]);
 
-set Link01 dimen 2:= setof{i in I, j1 in L[1]: D0_1[i,j1] <= Dmax[1]}(i,j1);
-set Link10 dimen 2:= setof{j1 in L[1], i in I: D1_0[j1,i] <= Dmax[1]}(j1,i);
+param W{I}; # The population size at demand point i (pop)
+
+# Service operating capacity at IHC j
+# The capacity of a level-1 PCF in K. (pop)
+param SIZE{L[1]}, default 3; # Porte da UBS
+param C1{j1 in L[1]} := SIZE[j1]*3000; 
+param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
+param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
+
+
+# set Link01 dimen 2:= setof{i in I, j1 in L[1]: D0_1[i,j1] <= Dmax[1]}(i,j1);
+# set Link10 dimen 2:= setof{j1 in L[1], i in I: D1_0[j1,i] <= Dmax[1]}(j1,i);
+set Link01 := { (i,j1) in I cross L[1]: D0_1[i,j1] <= Dmax[1] and C1[j1] >= W[i] };
+set Link10 := { (j1,i) in L[1] cross I: D1_0[j1,i] <= Dmax[1] and C1[j1] >= W[i] };
+
+# display card(Link01);
+# display{i in I, j1 in L[1]: (i,j1) in Link01} D0_1[i,j1], W[i], C1[j1];
 
 set Link02 dimen 2:= setof{i in I, j2 in L[2]: D0_2[i,j2] <= Dmax[2]}(i,j2);
 set Link20 dimen 2:= setof{j2 in L[2], i in I: D2_0[j2,i] <= Dmax[2]}(j2,i);
@@ -177,7 +192,6 @@ param TC2_3{j2 in L[2], j3 in L[3]}:= (D2_3[j2,j3]/1000)*CKM; # Travel cost/pat 
 
 
 # Fonte: Tabela APS.dat.xlsx
-param SIZE{L[1]}, default 3; # Porte da UBS
 param VC1{L[1]},  default 3; # := 3; # Variable cost of PHC j / pop h ($/pop)
 param VC2{L[2]}; # := 0; # Variable cost of SHC j / pop h ($/pop)
 param VC3{L[3]}; # := 0; # Variable cost of THC j / pop h ($/pop)
@@ -206,9 +220,7 @@ param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0);
 # display IA3;
 # ############################################################################### 
 
-param W{I}; # The population size at demand point i (pop)
 param IVS{I}, default 0.5; # Índice de Vulnerabildade em Saude at demand point i (pop)
-
 #################################################################
 # Criando FAIXAS PROPORCIONAIS de IVS para cada município
 #################################################################
@@ -256,12 +268,6 @@ param MS3{E[3]} := round(1/3000,5); # Ministry of Health parameter for requireme
 param CNES1{E[1],EL[1]}; # Health professional teams PHC at location L1 (prof)
 param CNES2{E[2],EL[2]}; # Health professional teams PHC at location L2 (prof)
 param CNES3{E[3],EL[3]}; # Health professional teams PHC at location L3 (prof)
-
-# Service operating capacity at IHC j
-# The capacity of a level-1 PCF in K. (pop)
-param C1{j1 in L[1]} := SIZE[j1]*3000; 
-param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
-param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 
 
 param MAX_NEW_HIRE1{e1 in E[1], j1 in L[1]} := ceil(C1[j1]*MS1[e1]);
@@ -427,6 +433,10 @@ var y1{j1 in L1}, >=0, binary; # 1, if a L-1 PCF is used
 var y2{j2 in L2}, >=0, binary; # 1, if a L-2 SCF is used
 var y3{j3 in L3}, >=0, binary; # 1, if a L-3 TCF is used
 
+
+# Binary assignment: 1 if origin i sends patients to PHC j1, 0 otherwise
+# var z0_1{i in I, j1 in L1: (i,j1) in Link01}, binary; # 1 if i uses PHC j1
+
 # Patient flows “fluxo de ida”
 var u0_1{i in I, j1 in L1: (i,j1) in Link01}, >=0, <= W[i];  # The flow between demand point i and L1 (pop)
 var u1_2{j1 in L1, j2 in L2: (j1,j2) in Link12}, >=0, <= sum{i in I}W[i];  # The flow between L1 and L2 (pop)
@@ -515,9 +525,14 @@ s.t. R0a{i in I}:
     + sum{j3 in L3: (i,j3) in Link03}y0_3[i,j3] = 1;
 
 # # Patients assigned to closest health unit
-# s.t. R0b{i in I, j1 in L1}: sum{k1 in L1: D0_1[i,k1]>D0_1[i,j1]}y0_1[i,k1] + y1[j1] <= 1;
-# s.t. R0c{i in I, j2 in L2}: sum{k2 in L2: D0_2[i,k2]>D0_2[i,j2]}y0_2[i,k2] + y2[j2] <= 1;
-# s.t. R0d{i in I, j3 in L3}: sum{k3 in L3: D0_3[i,k3]>D0_3[i,j3]}y0_3[i,k3] + y3[j3] <= 1;
+s.t. R0b{i in I, j1 in L1: (i,j1) in Link01}: sum{k1 in L1: (i,k1) in Link01 and D0_1[i,k1]>D0_1[i,j1]}y0_1[i,k1] + y1[j1] <= 1;
+# s.t. R0c{i in I, j2 in L2: (i,j2) in Link02}: sum{k2 in L2: D0_2[i,k2]>D0_2[i,j2]}y0_2[i,k2] + y2[j2] <= 1;
+# s.t. R0d{i in I, j3 in L3: (i,j3) in Link03}: sum{k3 in L3: D0_3[i,k3]>D0_3[i,j3]}y0_3[i,k3] + y3[j3] <= 1;
+
+# Fluxos de saída e entrada em PHC
+s.t. FlowImpliesLink_Out {i in I, j1 in L1: (i,j1) in Link01}: u0_1[i,j1] <= W[i] * y0_1[i,j1];
+s.t. FlowImpliesLink_In  {i in I, j1 in L1: (i,j1) in Link01}: u1_0[j1,i] <= W[i] * y0_1[i,j1];
+
 
 # s.t. R0{i in I, j1 in L1}: W[i]*y[i,j1] = u0_1[i,j1];
 s.t. R0e{i in I, j1 in L1: (i,j1) in Link01}: W[i]*y0_1[i,j1] = u0_1[i,j1] + ut1[i,j1];
@@ -533,6 +548,8 @@ s.t. R0j{i in I, j3 in L3: (i,j3) in Link03}: ut3[i,j3] <= MAX_TELE_THC * u0_3[i
 s.t. R0k{i in I, j1 in L1: (i,j1) in Link01}: u0_1[i,j1] <= MAX_HOME_PHC * W[i];
 s.t. R0l{i in I, j2 in L2: (i,j2) in Link02}: u0_2[i,j2] <= MAX_HOME_SHC * W[i];
 s.t. R0m{i in I, j3 in L3: (i,j3) in Link03}: u0_3[i,j3] <= MAX_HOME_THC * W[i];
+
+
 
 # Balanceamento da demanda na origem i (todas as saídas = W[i])
 # (Somam-se todos os tipos de saída do domicílio: presencial para L1/L2/L3 

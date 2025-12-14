@@ -869,8 +869,8 @@ THC6	500
 # The number of alevel-k to be established.
 param U:=
 1	2
-2	3
-3	2
+2	2
+3	3
 ; 
 
 # Primary care facility (PCF)  — O1_0  O1_2  O1_3

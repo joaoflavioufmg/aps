@@ -1,1 +1,2 @@
 Location	Team	Qty
+[SHC1]	EQ2	7.00
