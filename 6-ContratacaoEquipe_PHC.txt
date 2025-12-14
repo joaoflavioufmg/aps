@@ -1,3 +1,4 @@
 Location	Team	Qty
-[PHC2]	eSF	2.00
-[PHC9]*	eSB	2.00
+[PHC2]	eSF	1.00
+[PHC10]*	eSF	1.00
+[PHC10]*	eSB	2.00

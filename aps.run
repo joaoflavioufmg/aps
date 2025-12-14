@@ -612,7 +612,7 @@ printf: "New team cost:\t%.2f\n",
     + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
     + newhire3[e3,j3]) >> '1-Financeiro.txt';
-    
+
 printf: "Team relocation cost:\t%.2f\n",
       sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
          RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
