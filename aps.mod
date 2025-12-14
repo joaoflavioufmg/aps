@@ -991,10 +991,35 @@ s.t. APSCost: Total_Costs_APS =
     + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]
-    # New staff cost
-    + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
-    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
-    + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
+    
+    # # New staff cost
+    # + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+    # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+    # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
+    + sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
+    - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
+    + newhire1[e1,j1])  # New teams hired
+    + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
+    + newhire1[e1,j1])  # New teams hired
+
+    + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
+    - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
+    + newhire2[e2,j2]) # New teams hired
+    + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
+    + newhire2[e2,j2]) # New teams hired
+	
+    + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
+    - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
+    + newhire3[e3,j3]) # New teams hired
+    + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
+    + newhire3[e3,j3]) # New teams hired
+
     # Variable costs
     + sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]                   # Home → L1
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
@@ -1150,9 +1175,33 @@ printf: "Fixed cost [Candidate]:\t$%10.2f\n",
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3];
 printf: "New team cost:\t\t$%10.2f\n", 
-      sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
-    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
-    + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3];
+    #   sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+    # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+    # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3];
+    sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
+    - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
+    + newhire1[e1,j1])  # New teams hired
+    + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
+    + newhire1[e1,j1])  # New teams hired
+
+    + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
+    - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
+    + newhire2[e2,j2]) # New teams hired
+    + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
+    + newhire2[e2,j2]) # New teams hired
+	
+    + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
+    - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
+    + newhire3[e3,j3]) # New teams hired
+    + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
+    + newhire3[e3,j3]); # New teams hired
+
 printf: "Team relocation cost:\t$%10.2f\n",
      # Re-assignment costs:  Transfer IN
     sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
@@ -1620,9 +1669,33 @@ printf: "Fixed cost [Candidate]:\t%.2f\n",
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3] >> Financeiro;
 printf: "New team cost:\t%.2f\n", 
-      sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
-    + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
-    + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3] >> Financeiro;
+    #   sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+    # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+    # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3] >> Financeiro;
+    sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
+    - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
+    + newhire1[e1,j1])  # New teams hired
+    + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
+    + newhire1[e1,j1])  # New teams hired
+
+    + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
+    - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
+    + newhire2[e2,j2]) # New teams hired
+    + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
+    + newhire2[e2,j2]) # New teams hired
+	
+    + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
+    - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
+    + newhire3[e3,j3]) # New teams hired
+    + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
+    + newhire3[e3,j3]) >> Financeiro; # New teams hired
+
 printf: "Team relocation cost:\t%.2f\n",
     # Re-assignment costs:  Transfer IN
     sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
