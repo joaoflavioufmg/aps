@@ -4,7 +4,7 @@ Loc	Team	CNES	Req	Transf	New	Res	Surp	Def
 [PHC1]	eMulti	1.0	0.13	0.0	0.0	1.0	0.9	0.0
 [PHC2]	eSF	1.0	3.00	1.0	1.0	3.0	0.0	0.0
 [PHC2]	eSB	3.0	3.00	0.0	0.0	3.0	0.0	0.0
-[PHC2]	eMulti	0.0	0.30	0.0	0.0	0.0	0.0	0.3
+[PHC2]	eMulti	0.0	0.31	0.0	0.0	0.0	0.0	0.3
 [PHC3]	eSF	1.0	1.00	0.0	0.0	1.0	0.0	0.0
 [PHC3]	eSB	1.0	1.00	0.0	0.0	1.0	0.0	0.0
 [PHC3]	eMulti	0.0	0.12	0.0	0.0	0.0	0.0	0.1
