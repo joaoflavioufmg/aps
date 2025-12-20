@@ -493,9 +493,7 @@ var newhire2{e2 in E[2], j2 in L2}, integer, >= 0, <= MAX_NEW_HIRE2[e2,j2];
 var newhire3{e3 in E[3], j3 in L3}, integer, >= 0, <= MAX_NEW_HIRE3[e3,j3]; 
 
 
-
 var Total_Costs_APS, >=0; # Aux variable for report
-
 
 #################################################
 # CONSTRAINTS
@@ -754,18 +752,6 @@ s.t. NoChainTransfer3_Strong{e3 in E[3],
 # "You can only send out teams if you haven't received any teams in."
 # If you receive 1 eMulti team, then CNES[eMulti,j1] - 1 is the maximum you can send out. If CNES was 0, then 0 - 1 = -1 means you cannot send any (constraint violated if you try).
 
-# s.t. NoSendIfReceivePHC{e1 in E[1], j1 in EL[1] inter L1}:
-#     sum{to in L1: to != j1 and j1 < to} transfer1[e1,j1,to] 
-#     <= CNES1[e1,j1] - sum{from in EL[1] inter L1: from != j1 and from < j1} transfer1[e1,from,j1];
-
-# s.t. NoSendIfReceiveSHC{e2 in E[2], j2 in EL[2] inter L2}:
-#     sum{to in L2: to != j2 and j2 < to} transfer2[e2,j2,to] 
-#     <= CNES2[e2,j2] - sum{from in EL[2] inter L2: from != j2 and from < j2} transfer2[e2,from,j2];
-
-# s.t. NoSendIfReceiveTHC{e3 in E[3], j3 in EL[3] inter L3}:
-#     sum{to in L3: to != j3 and j3 < to} transfer3[e3,j3,to] 
-#     <= CNES3[e3,j3] - sum{from in EL[3] inter L3: from != j3 and from < j3} transfer3[e3,from,j3];
-
 s.t. NoSendIfReceivePHC{e1 in E[1], j1 in EL[1] inter L1}:
     sum{to in L1: to != j1 and ITEM1[j1] < ITEM1[to]} transfer1[e1,j1,to] 
     <= CNES1[e1,j1] - sum{from in EL[1] inter L1: from != j1 and ITEM1[from] < ITEM1[j1]} transfer1[e1,from,j1];
@@ -793,6 +779,7 @@ s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
     + newhire1[e1,j1]  # New teams hired
     = surplus1[e1,j1] - deficit1[e1,j1];
 
+
 # For CANDIDATE locations: only new hires and transfers IN
 s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
     # Required teams
@@ -808,6 +795,59 @@ s.t. SurplusLimit1{e1 in E[1], j1 in EL[1] inter L1}:
 # Teams transferred OUT <= CNES
 s.t. TransfOut1_lt_CNES{e1 in E[1], j1 in EL[1], to in L1: to != j1}: transfer1[e1,j1,to] <= CNES1[e1,j1]; 
 
+
+#################################################
+# MINIMUM STAFFING REQUIREMENT FOR eSF
+#################################################
+# Every existing PHC must maintain at least 1 eSF team
+# (eSF is the core family health team - cannot be completely removed)
+s.t. MinimumeSF_AtExisting{j1 in EL[1] inter L1}:
+    CNES1['eSF',j1]  # Existing eSF teams
+    + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1]  # Transfers IN
+    - sum{to in L1: to != j1}transfer1['eSF',j1,to]  # Transfers OUT    
+    + newhire1['eSF',j1]  # New hires
+    >= 1;
+    
+
+# ########################################################################
+# # Result eSF = Result eSB (CNES + Transfers IN - transferred OUT + new hire)
+# # >> ATENÇÃO: Se proporção de paciente/pop de eSF e eSB for diferente, INFEASIBLE!
+# ########################################################################
+# s.t. Team_SF_equal_SBe{j1 in EL[1] inter L1}: 
+#     CNES1['eSF',j1] 
+#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN
+#         - sum{to in L1: to != j1}transfer1['eSF',j1,to] # Teams transferred OUT
+#         + newhire1['eSF',j1] =
+#     CNES1['eSB',j1] 
+#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSB',from,j1] # Transfers IN
+#         - sum{to in L1: to != j1}transfer1['eSB',j1,to] # Teams transferred OUT
+#         + newhire1['eSB',j1];
+
+# s.t. Team_SF_equal_SBc{j1 in CL[1] inter L1}:     
+#         sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN        
+#         + newhire1['eSF',j1] =    
+#         + sum{from in EL[1] inter L1: from != j1}transfer1['eSB',from,j1] # Transfers IN        
+#         + newhire1['eSB',j1];
+
+# ########################################################################
+# # Result eSF = Result eSB (CNES + Transfers IN - transferred OUT + new hire)
+# # >> ATENÇÃO:  O problema fica muito difícil, mas TEM SOLUÇÃO!
+# ########################################################################
+s.t. Team_SF_equal_SBe{j1 in EL[1] inter L1}: 
+    CNES1['eSF',j1] 
+        + sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN
+        - sum{to in L1: to != j1}transfer1['eSF',j1,to] # Teams transferred OUT
+        + newhire1['eSF',j1] - surplus1['eSF',j1] + deficit1['eSF',j1] =
+    CNES1['eSB',j1] 
+        + sum{from in EL[1] inter L1: from != j1}transfer1['eSB',from,j1] # Transfers IN
+        - sum{to in L1: to != j1}transfer1['eSB',j1,to] # Teams transferred OUT
+        + newhire1['eSB',j1] - surplus1['eSB',j1] + deficit1['eSB',j1];
+
+s.t. Team_SF_equal_SBc{j1 in CL[1] inter L1}:     
+        sum{from in EL[1] inter L1: from != j1}transfer1['eSF',from,j1] # Transfers IN        
+        + newhire1['eSF',j1] - surplus1['eSF',j1] + deficit1['eSF',j1] =    
+        + sum{from in EL[1] inter L1: from != j1}transfer1['eSB',from,j1] # Transfers IN        
+        + newhire1['eSB',j1] - surplus1['eSB',j1] + deficit1['eSB',j1];
 
 
 # We can not transfer OUT and Hire teams
@@ -827,7 +867,7 @@ s.t. DetectTransferOut1b{e1 in E[1], j1 in EL[1] inter L1}:
 
 s.t. NoHireIfTransferOut1{e1 in E[1], j1 in EL[1] inter L1}:
     newhire1[e1,j1] <= MAX_NEW_HIRE1[e1,j1] * (1 - HasTransferOut1[e1,j1]);
-# surplus1[e1,j1] +
+
 
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 2 (SHC)
@@ -841,6 +881,7 @@ s.t. TeamBalance2e{j2 in EL[2] inter L2, e2 in E[2]}:
     - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
     + newhire2[e2,j2]
     = surplus2[e2,j2] - deficit2[e2,j2];
+
 
 s.t. TeamBalance2c{j2 in CL[2] inter L2, e2 in E[2]}:
     # Required teams based on patient flow 
@@ -879,6 +920,8 @@ s.t. TeamBalance3e{j3 in EL[3] inter L3, e3 in E[3]}:
     - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
     + newhire3[e3,j3]
     = surplus3[e3,j3] - deficit3[e3,j3];
+
+    
 
 s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}: 
     # Required teams based on patient flow 
@@ -981,6 +1024,8 @@ s.t. R11c{j3 in CL[3] inter L3}:
 s.t. R12c:  sum{j1 in CL[1] inter L1}y1[j1] <= MaxNewPHC;
 s.t. R13c: sum{j2 in CL[2] inter L2}y2[j2] <= MaxNewSHC;
 s.t. R14c: sum{j3 in CL[3] inter L3}y3[j3] <= MaxNewTHC;
+
+
 
 s.t. APSCost: Total_Costs_APS = 
     # Existing facilities cost    

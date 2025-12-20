@@ -1,4 +1,1 @@
 From	To	Team	Qty	Dist (km)
-[THC2]	[THC4]*	ME3	1.00	34.47
-[THC3]	[THC5]*	ME3	1.00	52.45
-[THC3]	[THC5]*	DE3	1.00	52.45
