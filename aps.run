@@ -16,9 +16,9 @@
 # ===============================================
 reset data;
 model aps.mod;
-# data aps.dat;
-data LS.dat;
-data LS_distdur.dat;
+data aps.dat;
+# data LS.dat;
+# data LS_distdur.dat;
 
 
 # check;
