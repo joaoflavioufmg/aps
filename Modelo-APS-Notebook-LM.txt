@@ -68,12 +68,55 @@ Acesso ao Censo: Download das XXX regiões censitárias do Brasil.
 Cálculo do Centróide de cada região censitária
 Determinação de latitude e longitude de cdada região censitária
 
+
 SELEÇÃO DOS MUNICÍPIOS PARA ANÁLISE:
 Belo Horizonte: 3218 setores censitários
 Contagem: 853 setores censitários
 Divinópolis: 508 setores censitários
 Lagoa Santa: 224 setores censitários
 Montes Claros: 819 setores censitários.
+
+ETAPA 1: Filtro Espacial (ABNC)
+
+Identifica setores censitários com baixa cobertura de UBS utilizando 
+critério de distância mínima à UBS mais próxima superior a 2 km.
+
+Resultado em Divinópolis:
+
+    548 setores censitários totais
+    142 setores identificados em vácuo assistencial (25,9%)
+    44 UBS existentes mapeadas
+
+ETAPA 2: Ranking Multicritério
+
+Dentro dos 142 setores ABNC, calcula-se um escore combinando três critérios normalizados:
+
+Score = 0,30 × Área territorial + 0,40 × Densidade populacional + 0,30 × Centralidade no vácuo
+
+Justificativa dos pesos:
+
+    40% Densidade: prioriza locais que atendem maior população (eficiência)
+    30% Área: considera setores extensos que cobrem maior território
+    30% Centralidade: prioriza setores mais isolados da rede atual
+
+Resultado: Ranking dos 142 setores e seleção dos Top 55 candidatos (10% do total de setores do município)
+
+ETAPA 3: Auditoria Qualitativa
+
+Valida territorialmente os 55 candidatos através de checklist estruturado em 4 dimensões (0 a 4 pontos):
+
+Dimensão 1 - Equipamentos públicos próximos (automatizada via OpenStreetMap) 
+Dimensão 2 - Acessibilidade viária e transporte (automatizada via OpenStreetMap) 
+Dimensão 3 - Viabilidade física do terreno (manual via Google Maps) 
+Dimensão 4 - Inserção urbana e ausência de barreiras (manual via Google Maps)
+
+Classificação final:
+
+    4 pontos: Alta viabilidade
+    3 pontos: Viabilidade moderada
+    2 pontos: Viabilidade condicionada
+    0-1 pontos: Baixa viabilidade
+
 
 
 ÍNDICE DE VULNERABILIDADE: 
@@ -151,9 +194,9 @@ VPB07 0.15 Proporção de diabéticos com hemoglobina glicada solicitada no seme
 
 Índice: (CH + IU + VS) / 3
 
-SELEÇÃO DO CONJUNTO DE EQUIPES (3) PARA O MODELO:
+SELEÇÃO DO CONJUNTO DE EQUIPES (4) PARA O MODELO:
 
-eSF + eSB + eMulti (equiv. NASF 1)
+eSF + eSB + eMulti + ACS
 
 Análise para seleção de equipes:
 85% (~55.000 equipes) eSF: Equipe de Saúde da Família; +  eAP: Equipe de Atenção Primária (= composição mínima de uma eSF)
@@ -162,6 +205,13 @@ Análise para seleção de equipes:
 3.5% (~2.200 equipes) eAB: Equipe de Atenção Básica para populações específicas (e.g. quilombolas e ribeirinhas) (Não tem em nossas amostras de municípios)
 0.8% (~   500 equipes) eCR: Equipe dos Consultórios de Rua; (Quase não tem em nossas amostras de municípios)
 0.5% (~   350 equipes) eAPP: Equipe de Atenção Primária Prisional. (Quase não tem em nossas amostras de municípios)
+
+
+Sobre a estrutura de custos, temos as informações abaixo (elas serão consultadas e importadas para um excel):
+
+Orçamento para APS nos municípios: https://relatorioaps.saude.gov.br/gerenciaaps/pagamento 
+
+Os valores de investimentos nas novas UBS: https://www.gov.br/saude/pt-br/assuntos/novo-pac-saude/unidades-basicas-de-saude/faq-ubs/analise-habilitacao-e-selecao-das-propostas/valores-para-construcao-de-nova-ubs
 
 Município
 	eSF/eAP (Saúde da Família) 	eSB (Saúde Bucal) 	eNASF (Apoio) 	eAB (Pop. Específica) 	eCR (Consultório na Rua) 	eAPP (Prisional) 	Total de Equipes
@@ -198,6 +248,7 @@ Previne Brasil para o NASF:  Modelo de financiamento de custeio da Atenção Pri
 DADOS DE DISTÂNCIAS
 
 Elaboração de matriz origem destino dos setores censitários dos municípios selecionados https://openrouteservice.org/ 
+
 32 MB: BeloHorizonte_matrix_results_full_matrix.json
 08 MB: Contagem_matrix_results_full_matrix.json
 08 MB: MontesClaros_matrix_results_full_matrix.json
@@ -208,3 +259,7 @@ Elaboração de matriz origem destino dos setores censitários dos municípios s
 ANÁLISE DOS RESULTADOS
 Cobertura ATUAL dos setores sensitários por UBS em: https://mapas.sus.c3sl.ufpr.br/.
 Diagnóstico de coberturas atuais (https://relatorioaps.saude.gov.br/)
+
+Quantidade de equipes em cada UBS, população vinculada:  
+https://github.com/ms-cgmaia/mapas
+https://github.com/ms-cgmaia/mapas/blob/main/scripts/equipes.ipynb

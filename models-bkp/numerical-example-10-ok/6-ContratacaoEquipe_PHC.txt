@@ -1,3 +1,0 @@
-Location	Team	Qty
-[PHC2]	eSF	2.00
-[PHC9]*	eSB	2.00

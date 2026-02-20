@@ -1,8 +1,8 @@
 c Problem:    aps
-c Rows:       322821
-c Columns:    169348
-c Non-zeros:  4671791
-c Status:     UNDEFINED
-c Objective:  R0322821 = inf (MINimum)
+c Rows:       352978
+c Columns:    173974
+c Non-zeros:  4832807
+c Status:     INTEGER EMPTY
+c Objective:  R0352978 = inf (MINimum)
 c
-s mip 322821 169348 u inf
+s mip 352978 173974 n inf
