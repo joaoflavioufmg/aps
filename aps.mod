@@ -1550,7 +1550,7 @@ minimize Total_Costs:
 # for{j1 in L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
 # + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
 # + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]) > 0}{
-#     printf"L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + SHC + THC)\n", 
+#     printf"PHC[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + SHC + THC)\n", 
 #         j1, 
 #         sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
 #         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
@@ -1575,7 +1575,7 @@ minimize Total_Costs:
 # for{j2 in L2: (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
 # + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
 # + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])>0}{
-#     printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + THC)\n", 
+#     printf: "SHC[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + THC)\n", 
 #         j2, 
 #         sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
 #         + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
@@ -1600,7 +1600,7 @@ minimize Total_Costs:
 # for{j3 in L3: (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
 # + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
 # + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])>0}{
-#     printf: "L[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + SHC)\n", 
+#     printf: "THC[%-4s] > \t : %d\t(%d + %d + %d) (Orig: Reg + PHC + SHC)\n", 
 #         j3, 
 #         sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
 #         + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
@@ -2057,7 +2057,7 @@ minimize Total_Costs:
 # for{j1 in L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
 # + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
 # + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]) > 0}{
-#     printf"L[%s]\t\t%d\tDist (km)\n",  # \t(%d + %d + %d) (Orig: Reg + SHC + THC)
+#     printf"PHC[%s]\t\t%d\tDist (km)\n",  # \t(%d + %d + %d) (Orig: Reg + SHC + THC)
 #         j1, 
 #         sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
 #         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
@@ -2084,7 +2084,7 @@ minimize Total_Costs:
 # for{j2 in L2: (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
 # + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
 # + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])>0}{
-#     printf: "L[%s]\t\t%d\tDist (km)\n",  # \t(%d + %d + %d) (Orig: Reg + PHC + THC)
+#     printf: "SHC[%s]\t\t%d\tDist (km)\n",  # \t(%d + %d + %d) (Orig: Reg + PHC + THC)
 #         j2, 
 #         sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
 #         + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
@@ -2111,7 +2111,7 @@ minimize Total_Costs:
 # for{j3 in L3: (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
 # + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
 # + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])>0}{
-#     printf: "L[%s]\t\t%d\tDist (km)\n", # \t(%d + %d + %d) (Orig: Reg + PHC + SHC)
+#     printf: "THC[%s]\t\t%d\tDist (km)\n", # \t(%d + %d + %d) (Orig: Reg + PHC + SHC)
 #         j3, 
 #         sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
 #         + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
