@@ -30,7 +30,11 @@
 # param time, symbolic, := time2str(now, "%d de %b de 20%y as %T");
 # #----------------------------------------------------------------------------------------------------------------------------------------------#
 
-set I; # The set of demand points.
+set I; # The set of demand points (Setor Censistário -> Clusters).
+set C; # CNES codes
+
+# every c has one i, but some i unused. I can use x[ MAPI[c] ]
+param MAPI{C} symbolic in I; 
 
 set K; # Health care levels (PHC, SHC, THC)
 
@@ -38,14 +42,15 @@ param Dmax{K}; # Maximal distance (or travel time)
 
 set E{K}; # Health care team from level k 
 
-set L{k in K};
-
-set EL{k in K} within L[k]; # EXISTING health care units on three levels
-
-set CL{k in K} := L[k] diff EL[k]; # CANDIDATE health care LOCATIONS on three levels
+# set L{k in K}; # Todos os destinos em cada nível (Existentes e candidatos)
+# set EL{k in K} within L[k]; # EXISTING health care units on three levels (Cluster > CNES)
+# set CL{k in K} := L[k] diff EL[k]; # CANDIDATE health care LOCATIONS on three levels (Cluster)
 # set CL{k in K} within L[k]; # CANDIDATE health care LOCATIONS on three levels
 
-# set L{k in K} := EL[k] union CL[k]; 
+set EL{k in K}; # (código CNES dentro de um cluster)
+set CL{k in K}; # (código dos clusters candidatos)
+set L{k in K} := EL[k] union CL[k]; 
+
 
 ################################################
 # BUDGET PARAMETER
@@ -95,7 +100,8 @@ param D3_2{j3 in L[3], j2 in L[2]} := D2_3[j2,j3]; # The travel time between can
 # set OD := EL[2] cross L[2];
 # display OD;
 # Distance matrix between same-level facilities (for team transfer)
-param DL1{EL[1], L[1]}; # default 10; # Distance between L1 facilities (meters)
+
+param DL1{e1 in EL[1], j1 in L[1]}; # Distance between L1 facilities (meters)
 param DL2{EL[2], L[2]} default (sum{e1 in EL[1], j1 in L[1]} DL1[e1,j1]) / (card(EL[1])*card(L[1])); # Distance between L2 facilities (meters)
 param DL3{EL[3], L[3]} default (sum{e1 in EL[1], j1 in L[1]} DL1[e1,j1]) / (card(EL[1])*card(L[1])); # Distance between L3 facilities (meters)
 
@@ -109,11 +115,11 @@ param DL3{EL[3], L[3]} default (sum{e1 in EL[1], j1 in L[1]} DL1[e1,j1]) / (card
 # display min{i in EL[3],j3 in L[3]}(DL3[i,j3]);
 # display max{i in EL[3],j3 in L[3]}(DL3[i,j3]);
 
-param W{I}; # The population size at demand point i (pop)
+param W{I}; # The population size at demand point i (pop) (pop cluster)
 
 # Service operating capacity at IHC j
 # The capacity of a level-1 PCF in K. (pop)
-param SIZE{L[1]}, default 3; # Porte da UBS
+param SIZE{L[1]}, default 1, <= 5; # Porte da UBS
 param C1{j1 in L[1]} := SIZE[j1]*3000; 
 param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
 param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
@@ -121,8 +127,13 @@ param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 
 # set Link01 dimen 2:= setof{i in I, j1 in L[1]: D0_1[i,j1] <= Dmax[1]}(i,j1);
 # set Link10 dimen 2:= setof{j1 in L[1], i in I: D1_0[j1,i] <= Dmax[1]}(j1,i);
-set Link01 := { (i,j1) in I cross L[1]: D0_1[i,j1] <= Dmax[1] and C1[j1] >= W[i] };
-set Link10 := { (j1,i) in L[1] cross I: D1_0[j1,i] <= Dmax[1] and C1[j1] >= W[i] };
+# NOTE: EL[1] capacity filter uses the maximum possible expanded capacity (SIZE=5 → 15000)
+# so that demand points only reachable after expansion are included in the link sets.
+set Link01 := { (i,j1) in I cross L[1]: D0_1[i,j1] <= Dmax[1] and
+    (if j1 in EL[1] then 5*3000 else C1[j1]) >= W[i] };
+set Link10 := { (j1,i) in L[1] cross I: D1_0[j1,i] <= Dmax[1] and
+    (if j1 in EL[1] then 5*3000 else C1[j1]) >= W[i] };
+
 
 # display card(Link01);
 # display{i in I, j1 in L[1]: (i,j1) in Link01} D0_1[i,j1], W[i], C1[j1];
@@ -173,9 +184,13 @@ set L3:= L[3] inter H3;
 
 
 # # ==== CHECK: Connectivity ==================================
-# check{i in I} card({j1 in L[1]: (i,j1) in Link1}) > 0 ;
-# check{j1 in L[1]} card({j2 in L[2]: (j1,j2) in Link2}) > 0;
-# check{j2 in L[2]} card({j3 in L[3]: (j2,j3) in Link3}) > 0;
+# # FOR GLPK, only
+# check{i in I} card({j1 in L[1]: (i,j1) in Link01}) > 0 ;
+# check{i in I} card({j1 in L[1]: (j1,i) in Link10}) > 0 ;
+# check{j1 in L[1]} card({j2 in L[2]: (j1,j2) in Link12}) > 0;
+# check{j1 in L[1]} card({j2 in L[2]: (j2,j1) in Link21}) > 0;
+# check{j2 in L[2]} card({j3 in L[3]: (j2,j3) in Link23}) > 0;
+# check{j2 in L[2]} card({j3 in L[3]: (j3,j2) in Link32}) > 0;
 # #############################################################
 
 # display{i in I}: card({j1 in L[1]: (i,j1) in Link1});
@@ -226,7 +241,17 @@ param IA2{CL[2]}:= round(I_L2*(R*(1+R)^N)/((1+R)^N-1),0);
 # Annualized Investment for operating NEW THC j    ($/year)
 param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0); 
 # display IA3;
-# ############################################################################### 
+# ##############################################################################
+
+# ############## Amortização anual para Expansão de UBS EXISTENTE ##############
+# Investment cost per extra SIZE unit to physically expand an existing EL[1] PHC
+# (renovation / reform cost; typically less than full new-build I_L1)
+param I_L1_exp;  # ($/SIZE unit)
+# Annualized expansion investment per SIZE unit at an existing EL[1] facility
+param IA1_exp_unit := round(I_L1_exp*(R*(1+R)^N)/((1+R)^N-1), 0);
+# Incremental annual operating cost per extra SIZE unit (mirrors FC1 = SIZE*3000 formula)
+param FC1_exp_unit := 3000;  # ($/year per extra SIZE unit)
+# ###############################################################################
 
 param IVS{I}, default 0.5; # Índice de Vulnerabildade em Saude at demand point i (pop)
 #################################################################
@@ -245,9 +270,9 @@ param HIG_IVS := min{j in I : COUNT_IVS[j] >= card(I) } IVS[j];
 
 # (prof/pop)
 param PROF_POP{i in I} := 
-    if IVS[i] <= LOW_IVS then 1/2500
+    if IVS[i] <= LOW_IVS then 1/3500 # 2500 > 3500
         else if IVS[i] <= MED_IVS then 1/3000
-        else if IVS[i] <= HIG_IVS then 1/3500
+        else if IVS[i] <= HIG_IVS then 1/2500 # 3500 > 2500
         else "ERROR";
     
 # # Display IVS
@@ -279,7 +304,11 @@ param CNES2{E[2],EL[2]}; # Health professional teams PHC at location L2 (prof)
 param CNES3{E[3],EL[3]}; # Health professional teams PHC at location L3 (prof)
 
 
-param MAX_NEW_HIRE1{e1 in E[1], j1 in L[1]} := ceil(C1[j1]*MS1[e1]);
+# For EL[1]: use max expanded capacity (SIZE=5 → 15000) so hiring is never capped
+# below what a fully-expanded facility would require.
+param MAX_NEW_HIRE1{e1 in E[1], j1 in L[1]} :=
+    if j1 in EL[1] then ceil(5*3000*MS1[e1])
+    else ceil(C1[j1]*MS1[e1]);
 param MAX_NEW_HIRE2{e2 in E[2], j2 in L[2]} := ceil(C2[j2]*MS2[e2]);
 param MAX_NEW_HIRE3{e3 in E[3], j3 in L[3]} := ceil(C3[j3]*MS3[e3]);
 
@@ -362,6 +391,7 @@ param ExistingCost :=
 # # ====================================================
 # display BUDGET;
 # display ExistingCost;
+# # FOR GLPK, only
 # check: BUDGET >= ExistingCost;
 # # ====================================================
 
@@ -422,6 +452,7 @@ param ITEM3{L[3]};
 # display sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to} RC2[e2]*(DL2[from,to]/1000);
 # display sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to} RC3[e3]*(DL3[from,to]/1000);
 
+# # FOR GLPK, only
 # check sum{j1 in L1, c1 in E[1]}CE1[c1] >= sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to} RC1[e1]*(DL1[from,to]/1000);
 
 # check sum{j2 in L2, c2 in E[2]}CE2[c2] >= sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to} RC2[e2]*(DL2[from,to]/1000);
@@ -441,6 +472,14 @@ var y0_3{i in I, j3 in L3: (i,j3) in Link03}, >=0, <=1; # $ Pop is ASSIGNED to L
 var y1{j1 in L1}, >=0, binary; # 1, if a L-1 PCF is used
 var y2{j2 in L2}, >=0, binary; # 1, if a L-2 SCF is used
 var y3{j3 in L3}, >=0, binary; # 1, if a L-3 TCF is used
+
+# ---------------------------------------------------------------
+# PHC CAPACITY EXPANSION (existing EL[1] facilities only)
+# extra_size1[j1] = number of additional SIZE units built at j1
+# Effective capacity becomes C1[j1] + extra_size1[j1]*3000
+# Bound: SIZE[j1] + extra_size1[j1] <= 5  (max real size = 5)
+# ---------------------------------------------------------------
+var extra_size1{j1 in EL[1] inter L1}, integer, >= 0, <= 5 - SIZE[j1];
 
 
 # Binary assignment: 1 if origin i sends patients to PHC j1, 0 otherwise
@@ -960,12 +999,13 @@ s.t. NoHireIfTransferOut3{e3 in E[3], j3 in EL[3] inter L3}:
 # CAPACITY CONSTRAINTS
 #################################################
 
-# Existing locations
+# Existing locations — capacity is base C1[j1] plus any approved expansion
 s.t. R6e{j1 in EL[1] inter L1}: 
     sum{i in I: (i,j1) in Link01}u0_1[i,j1]                   # Home → L1
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              # L3 → L1
-    + sum{i in I: (i,j1) in Link01} ut1[i,j1] <= C1[j1];
+    + sum{i in I: (i,j1) in Link01} ut1[i,j1]
+    <= C1[j1] + extra_size1[j1]*3000;                          # expandable capacity
 
 s.t. R7e{j2 in EL[2] inter L2}: 
     sum{i in I: (i,j2) in Link02}u0_2[i,j2] 
@@ -982,7 +1022,8 @@ s.t. R8e{j3 in EL[3] inter L3}:
 s.t. R9e{j1 in EL[1] inter L1}: 
     sum{i in I: (j1,i) in Link10}u1_0[j1,i]                   # L1 → Home
     + sum{j2 in L2: (j1,j2) in Link12}u1_2[j1,j2]              # L1 → L2
-    + sum{j3 in L3: (j1,j3) in Link13}u1_3[j1,j3] <= C1[j1];   # L1 → L3
+    + sum{j3 in L3: (j1,j3) in Link13}u1_3[j1,j3]
+    <= C1[j1] + extra_size1[j1]*3000;                          # L1 → L3 (expandable)
 
 s.t. R10e{j2 in EL[2] inter L2}: 
     sum{i in I: (j2,i) in Link20}u2_0[j2,i]                   # L2 → Home
@@ -1041,6 +1082,8 @@ s.t. APSCost: Total_Costs_APS =
     sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e]
+    # Existing PHC expansion cost (annualised investment + incremental operating cost)
+    + sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1]
     # New facilities fixed cost    
     + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
@@ -1125,6 +1168,8 @@ minimize Total_Costs:
     + sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e]
+    # Existing PHC expansion cost (annualised investment + incremental operating cost)
+    + sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1]
     # New unit cost
     + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
@@ -1224,6 +1269,8 @@ minimize Total_Costs:
 #       sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
 #     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
 #     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e];    
+# printf: "Expansion cost [Existing]:\t$%10.2f\n", 
+#       sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1];
 # printf: "Fixed cost [Candidate]:\t$%10.2f\n", 
 #       sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
 #     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
@@ -1619,21 +1666,42 @@ minimize Total_Costs:
 #     printf"\t> L[%-4s]: %d\n", j2, u3_2[j3,j2];}
 # }
 
-# printf: "========================================\n";
-# printf: "PHC     :\tCapty\tMet\tUse(%%)\n";
-# printf: "========================================\n";
-# printf{j1 in EL[1] inter L1}: 
-# "[%-5s]:\t%d\t%d\t%3d%%\n", j1,  
-# C1[j1], 
-# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-# if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0;
 
-# printf{j1 in CL[1] inter L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])>0}: 
-# "[%-5s*]:\t%d\t%d\t%3d%%\n", j1, 
-# C1[j1], 
-# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-# if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0;
+# printf: "================================================================\n";
+# printf: "PHC     :\tCapty\tExp\tTCapty\tMet\tUse(%%)\n";
+# printf: "================================================================\n";
 
+# printf{j1 in EL[1] inter L1}:
+# "[%-5s]:\t%d\t%d\t%d\t%d\t%3d%%\n",
+# j1,
+# C1[j1],
+# extra_size1[j1]*3000,
+# C1[j1] + extra_size1[j1]*3000,
+# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# if (C1[j1] + extra_size1[j1]*3000) > 0 then
+#     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
+#     / (C1[j1] + extra_size1[j1]*3000))*100 else 0;
+
+# printf{j1 in CL[1] inter L1:
+#         (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#         + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]) > 0}:
+# "[%-5s*]:\t%d\t-\t%d\t%d\t%3d%%\n",
+# j1,
+# C1[j1],
+# C1[j1],
+# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# if C1[j1] > 0 then
+#     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
+#     / C1[j1])*100 else 0;
 
 # printf: "========================================\n";
 # printf: "SHC     :\tCapty\tMet\tUse(%%)\n";
@@ -1718,6 +1786,8 @@ minimize Total_Costs:
 #       sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
 #     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
 #     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e] >> Financeiro;
+# printf: "Expansion cost [Existing]:\t%.2f\n", 
+#       sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1] >> Financeiro;
 # printf: "Fixed cost [Candidate]:\t%.2f\n", 
 #       sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
 #     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
@@ -2130,20 +2200,58 @@ minimize Total_Costs:
 #     printf">\tL[%s]\t%d\t%.2f\n", j2, u3_2[j3,j2], (D3_2[j3,j2]/1000) >> Fluxo_THC;}
 # }
 
-# printf: "========================================\n";
-# printf: "PHC\tCapty\tMet\tUse\n" > Uso_PHC;
-# printf: "========================================\n";
-# printf{j1 in EL[1] inter L1}: 
-# "[%s]\t%d\t%d\t%.2f\n", j1,  
-# C1[j1], 
-# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-# if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0 >> Uso_PHC;
+# # printf: "========================================\n";
+# # printf: "PHC\tCapty\tMet\tUse\n" > Uso_PHC;
+# # printf: "========================================\n";
+# # printf{j1 in EL[1] inter L1}: 
+# # "[%s]\t%d\t%d\t%.2f\n", j1,  
+# # C1[j1], 
+# # (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# # if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0 >> Uso_PHC;
 
-# printf{j1 in CL[1] inter L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])>0}: 
-# "[%s*]:\t%d\t%d\t%.2f\n", j1, 
-# C1[j1], 
-# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-# if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0 >> Uso_PHC;
+# # printf{j1 in CL[1] inter L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])>0}: 
+# # "[%s*]:\t%d\t%d\t%.2f\n", j1, 
+# # C1[j1], 
+# # (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# # if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0 >> Uso_PHC;
+
+
+# printf: "=======================================================\n";
+# printf: "PHC\tCapty\tExp\tTCapty\tMet\tUse\n" > Uso_PHC;
+# printf: "========================================================\n";
+
+# printf{j1 in EL[1] inter L1}:
+# "[%s]\t%d\t%d\t%d\t%d\t%5.2f\n",
+# j1,
+# C1[j1],
+# extra_size1[j1]*3000,
+# C1[j1] + extra_size1[j1]*3000,
+# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# if (C1[j1] + extra_size1[j1]*3000) > 0 then
+#     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
+#     / (C1[j1] + extra_size1[j1]*3000)) else 0 >> Uso_PHC;
+
+# printf{j1 in CL[1] inter L1:
+#         (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#         + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]) > 0}:
+# "[%s*]\t%d\t-\t%d\t%d\t%5.2f\n",
+# j1,
+# C1[j1],
+# C1[j1],
+# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# if C1[j1] > 0 then
+#     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
+#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
+#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
+#     / C1[j1]) else 0 >> Uso_PHC;
+
 
 # printf: "========================================\n";
 # printf: "SHC\tCapty\tMet\tUse\n" > Uso_SHC;
