@@ -16,6 +16,9 @@
 # py check_data_consistency.py *.dat
 # py check_data_consistency.py LS.dat > report.txt
 
+# py check_data_consistency.py LS_CLU.dat LS_CLU_distdur.dat
+# py check_data_consistency.py Cont_CLU.dat Cont_CLU_distdur.dat
+
 # glpsol -m aps.mod -d aps.dat -d city.dat --mipgap 0.01 --cuts --check --wlp aps.lp
 # glpsol -m aps.mod -d aps.dat --mipgap 0.01 --cuts --check --wlp aps.lp
 # highs --model_file .\aps.lp --aps options.opt 
@@ -48,7 +51,7 @@ set E{K}; # Health care team from level k
 # set CL{k in K} within L[k]; # CANDIDATE health care LOCATIONS on three levels
 
 set EL{k in K}; # (código CNES dentro de um cluster)
-set CL{k in K}; # (código dos clusters candidatos)
+set CL{k in K} within I; # (código dos clusters candidatos)
 set L{k in K} := EL[k] union CL[k]; 
 
 
@@ -116,6 +119,10 @@ param DL3{EL[3], L[3]} default (sum{e1 in EL[1], j1 in L[1]} DL1[e1,j1]) / (card
 # display max{i in EL[3],j3 in L[3]}(DL3[i,j3]);
 
 param W{I}; # The population size at demand point i (pop) (pop cluster)
+
+# # GLPK only: Cluster com população > 3.000 habitantes
+# set CLU_gt_3K := {i in I: W[i]>3000};
+# display card(CLU_gt_3K);
 
 # Service operating capacity at IHC j
 # The capacity of a level-1 PCF in K. (pop)
@@ -342,9 +349,9 @@ param O3_2{L[3]}; # The proportion of patients in a L-3 to a L-2 TCF. (%)
 
 # # =================================================================================
 # # Total DemandToL1,L2,L3 <= CapacityL1,L2,L3
-# check: sum{i in I: card({j1 in L[1]: (i,j1) in Link1}) > 0} W[i] <= sum{j1 in L[1]} C1[j1];
-# check: sum{i in I: card({j1 in L[1]: (i,j1) in Link1}) > 0} W[i]*max(max{j1 in L[1]}O1_2[j1], max{j3 in L[3]}O3_2[j3]) <= sum{j2 in L[2]} C2[j2];
-# check: sum{i in I: card({j1 in L[1]: (i,j1) in Link1}) > 0} W[i]*max(max{j1 in L[1]}O1_3[j1], max{j2 in L[2]}O2_3[j2]) <= sum{j3 in L[3]} C3[j3];
+# check: sum{i in I: card({j1 in L[1]: (i,j1) in Link01}) > 0} W[i] <= sum{j1 in L[1]} C1[j1];
+# check: sum{i in I: card({j1 in L[1]: (i,j1) in Link01}) > 0} W[i]*max(max{j1 in L[1]}O1_2[j1], max{j3 in L[3]}O3_2[j3]) <= sum{j2 in L[2]} C2[j2];
+# check: sum{i in I: card({j1 in L[1]: (i,j1) in Link01}) > 0} W[i]*max(max{j1 in L[1]}O1_3[j1], max{j2 in L[2]}O2_3[j2]) <= sum{j3 in L[3]} C3[j3];
 # # =================================================================================
 
 
@@ -404,6 +411,10 @@ param MaxNewSHC := if card(CL[2] inter L2) > 0 and MinCostPerNewSHC > 0 then
                    min(U[2], floor(AvailableBudget / MinCostPerNewSHC)) else 0;
 param MaxNewTHC := if card(CL[3] inter L3) > 0 and MinCostPerNewTHC > 0 then 
                    min(U[3], floor(AvailableBudget / MinCostPerNewTHC)) else 0;
+
+# display MaxNewPHC;
+# display MaxNewSHC;
+# display MaxNewTHC;
 
 # #  For GLPK, only
 # printf: "\n========================================\n";
@@ -480,6 +491,7 @@ var y3{j3 in L3}, >=0, binary; # 1, if a L-3 TCF is used
 # Bound: SIZE[j1] + extra_size1[j1] <= 5  (max real size = 5)
 # ---------------------------------------------------------------
 var extra_size1{j1 in EL[1] inter L1}, integer, >= 0, <= 5 - SIZE[j1];
+# var extra_size1{j1 in EL[1] inter L1}, integer, >= 0;
 
 
 # Binary assignment: 1 if origin i sends patients to PHC j1, 0 otherwise
@@ -577,8 +589,10 @@ s.t. R0a{i in I}:
     + sum{j2 in L2: (i,j2) in Link02}y0_2[i,j2]
     + sum{j3 in L3: (i,j3) in Link03}y0_3[i,j3] = 1;
 
-# # Patients assigned to closest health unit
-s.t. R0b{i in I, j1 in L1: (i,j1) in Link01}: sum{k1 in L1: (i,k1) in Link01 and D0_1[i,k1]>D0_1[i,j1]}y0_1[i,k1] + y1[j1] <= 1;
+# # Patients assigned to closest health unit (>>> HARD CONSTRAINT!<<<)
+# s.t. R0b (>>> HARD CONSTRAINT!<<<)
+# s.t. R0b{i in I, j1 in L1: (i,j1) in Link01}: sum{k1 in L1: (i,k1) in Link01 and D0_1[i,k1]>D0_1[i,j1]}y0_1[i,k1] + y1[j1] <= 1;
+
 # s.t. R0c{i in I, j2 in L2: (i,j2) in Link02}: sum{k2 in L2: D0_2[i,k2]>D0_2[i,j2]}y0_2[i,k2] + y2[j2] <= 1;
 # s.t. R0d{i in I, j3 in L3: (i,j3) in Link03}: sum{k3 in L3: D0_3[i,k3]>D0_3[i,j3]}y0_3[i,k3] + y3[j3] <= 1;
 

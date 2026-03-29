@@ -16,9 +16,13 @@
 # ===============================================
 reset data;
 model aps.mod;
-data aps.dat;
+# data aps.dat;
 # data LS.dat;
 # data LS_distdur.dat;
+# data LS_CLU.dat;
+# data LS_CLU_distdur.dat;
+data Cont_CLU.dat;
+data Cont_CLU_distdur.dat;
 
 # data data/LS_Cluster.dat;
 # data data/LS_dist_Cluster.dat;
@@ -44,12 +48,13 @@ data aps.dat;
 
 # Windows
 # ###############################
+# 'mipgap 1.e-3'
 option solver gurobi;
 option gurobi_options $gurobi_options
 'barconvtol 1e-8'
 'mipfocus 1'
 'presolve 2'
-'mipgap 1.e-2'
+'mipgap 0.3'
 'outlev 1'
 'threads 0'
 'timing 1'
@@ -137,8 +142,9 @@ printf: "Team relocation cost:\t$%10.2f\n",
          RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
          RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to];
-printf: "Variable Cost:\t\t$%10.2f\n",
-    # Variable cost per patient
+
+# Variable cost per patient
+printf: "Variable Cost:\t\t$%10.2f\n",    
     sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              
@@ -152,9 +158,10 @@ printf: "Variable Cost:\t\t$%10.2f\n",
     + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]              
     + sum{i in I: (i,j3) in Link03} ut3[i,j3]);                
 printf: "========================================\n";
+
+# If GLPK or Highs...(add this constant value)
 printf: "Total     Cost:\t\t$%10.2f\n", 
 Total_Costs
-# If GLPK or Highs...(add this constant value)
 + (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
@@ -625,32 +632,38 @@ printf: "Fixed cost [Candidate]:\t%.2f\n",
       sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3] >> '1-Financeiro.txt';
-printf: "New team cost:\t%.2f\n", 
-    #   sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+
+#   sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
     # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
     # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3] >> '1-Financeiro.txt';
+    # Teams transferred IN
+    # Teams transferred OUT    
+    # New teams hired
+    # Teams transferred IN  
+    # New teams hired  
+printf: "New team cost:\t%.2f\n",    
     sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
-	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
-    - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
-    + newhire1[e1,j1])  # New teams hired
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  
+    - sum{to in L1: to != j1}transfer1[e1,j1,to]  
+    + newhire1[e1,j1])  
     + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
-	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
-    + newhire1[e1,j1])  # New teams hired
+	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  
+    + newhire1[e1,j1])  
 
     + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
-	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
-    - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
-    + newhire2[e2,j2]) # New teams hired
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] 
+    - sum{to in L2: to != j2}transfer2[e2,j2,to]  
+    + newhire2[e2,j2]) 
     + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
-	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
-    + newhire2[e2,j2]) # New teams hired
+	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2]     
+    + newhire2[e2,j2]) 
 	
     + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
-	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
-    - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
-    + newhire3[e3,j3]) # New teams hired
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] 
+    - sum{to in L3: to != j3}transfer3[e3,j3,to]  
+    + newhire3[e3,j3]) 
     + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
-	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
+	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3]     
     + newhire3[e3,j3]) >> '1-Financeiro.txt';
 
 printf: "Team relocation cost:\t%.2f\n",
@@ -660,28 +673,34 @@ printf: "Team relocation cost:\t%.2f\n",
          RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
          RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to] >> '1-Financeiro.txt';
-printf: "Variable Cost:\t%.2f\n", 
-      # Variable cost per patient
-    sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
-    + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
-    + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              # L3 → L1
-    + sum{i in I: (i,j1) in Link01} ut1[i,j1])                # Telehealth in L1
-    + sum{j2 in L2}VC2[j2]*(sum{i in I: (i,j2) in Link02}u0_2[i,j2] # Home → L2
-    + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2]              # L1 → L2
-    + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]              # L3 → L2
-    + sum{i in I: (i,j2) in Link02} ut2[i,j2])                # Telehealth in L2
-    + sum{j3 in L3}VC3[j3]*(sum{i in I: (i,j3) in Link03} u0_3[i,j3] # Home → L3
-    + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3]              # L1 → L3
-    + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]              # L2 → L2
-    + sum{i in I: (i,j3) in Link03} ut3[i,j3]) >> '1-Financeiro.txt'; # Telehealth in L3
+# Variable cost per patient
+# Home → L1
+# L2 → L1
+# L3 → L1
+# Telehealth in L1
+printf: "Variable Cost:\t%.2f\n",       
+    sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  
+    + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              
+    + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              
+    + sum{i in I: (i,j1) in Link01} ut1[i,j1])                
+    + sum{j2 in L2}VC2[j2]*(sum{i in I: (i,j2) in Link02}u0_2[i,j2] 
+    + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2]              
+    + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]              
+    + sum{i in I: (i,j2) in Link02} ut2[i,j2])                
+    + sum{j3 in L3}VC3[j3]*(sum{i in I: (i,j3) in Link03} u0_3[i,j3] 
+    + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3]              
+    + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]              
+    + sum{i in I: (i,j3) in Link03} ut3[i,j3]) >> '1-Financeiro.txt'; 
 printf: "========================================\n";
-printf: "Total Cost:\t%.2f\n", 
-Total_Costs 
+
 # # If GLPK or Highs...
 # + (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
 #     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
 #     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
-- (# Penalty for surplus or deficit 
+# Penalty for surplus or deficit 
+printf: "Total Cost:\t%.2f\n", 
+Total_Costs 
+- (
     sum{e1 in E[1], j1 in L1}P1*surplus1[e1,j1] 
     + sum{e2 in E[2], j2 in L2}P2*surplus2[e2,j2] 
     + sum{e3 in E[3], j3 in L3}P3*surplus3[e3,j3] 
@@ -950,17 +969,16 @@ printf: "========================================\n";
 
 printf "" > "13-Fluxo_PHC.txt"; 
 
+# \t(%d + %d + %d) (Orig: Reg + SHC + THC)
 for{j1 in L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
 + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
 + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]) > 0}{
-    printf"PHC[%s]\t\t%d\tDist (km)\n",  # \t(%d + %d + %d) (Orig: Reg + SHC + THC)
+    printf"PHC[%s]\t\t%d\tDist (km)\n",  
         j1, 
         sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
         + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1] >> "13-Fluxo_PHC.txt"; 
-        # sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]), 
-        # sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1], 
-        # sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1] >> "13-Fluxo_PHC.txt"; 
+        
     # Reg
     for{i in I: (j1,i) in Link10 and u1_0[j1,i] > 0}{
     printf">\tL[%s]\t%d\t%.2f\n", i, u1_0[j1,i], (D1_0[j1,i]/1000) >> "13-Fluxo_PHC.txt";} # O1_0[j1]*
@@ -977,18 +995,16 @@ printf: "========================================\n";
 printf: "========================================\n";
 
 printf "" > "14-Fluxo_SHC.txt";
-
+# \t(%d + %d + %d) (Orig: Reg + PHC + THC)
 for{j2 in L2: (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
 + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
 + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])>0}{
-    printf: "SHC[%s]\t\t%d\tDist (km)\n",  # \t(%d + %d + %d) (Orig: Reg + PHC + THC)
+    printf: "SHC[%s]\t\t%d\tDist (km)\n",  
         j2, 
         sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
         + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
         + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2] >> "14-Fluxo_SHC.txt";
-        # sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]), 
-        # sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2], 
-        # sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2] >> "14-Fluxo_SHC.txt";
+        
     # Reg
     for{i in I: (j2,i) in Link20 and u2_0[j2,i] > 0}{
     printf">\tL[%s]\t%d\t%.2f\n", i, u2_0[j2,i], (D2_0[j2,i]/1000) >> "14-Fluxo_SHC.txt";} 
@@ -1005,18 +1021,16 @@ printf: "========================================\n";
 printf: "========================================\n";
 
 printf "" > "15-Fluxo_THC.txt";
-
+# \t(%d + %d + %d) (Orig: Reg + PHC + SHC)
 for{j3 in L3: (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
 + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
 + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])>0}{
-    printf: "THC[%s]\t\t%d\tDist (km)\n", # \t(%d + %d + %d) (Orig: Reg + PHC + SHC)
+    printf: "THC[%s]\t\t%d\tDist (km)\n", 
         j3, 
         sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
         + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
         + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3] >> "15-Fluxo_THC.txt";
-        # sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]), 
-        # sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3], 
-        # sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3] >> "15-Fluxo_THC.txt";
+        
     # Reg
     for{i in I: (j3,i) in Link30 and u3_0[j3,i] > 0}{
     printf">\tL[%s]\t%d\t%.2f\n", i, u3_0[j3,i], (D3_0[j3,i]/1000) >> "15-Fluxo_THC.txt";} 
