@@ -36,6 +36,8 @@
 set I; # The set of demand points (Setor Censistário -> Clusters).
 set C; # CNES codes
 
+# every c has one i, but some i unused. I can use x[ MAPI[c] ]
+param MAPI{C} symbolic in I; 
 
 set K; # Health care levels (PHC, SHC, THC)
 
@@ -53,52 +55,31 @@ set CL{k in K} within I; # (código dos clusters candidatos)
 set L{k in K} := EL[k] union CL[k]; 
 
 
-param POP_PER_TEAM := 3000; # patients served per full team  (integer)
-param COST_SCALE := 1e6;    # report in M R$
-
 ################################################
 # BUDGET PARAMETER
 param BUDGET >= 0; # Overall budget constraint ($/year)
-param BUDGET_s          := BUDGET  / COST_SCALE;
 ################################################
 
 param CE1{c1 in E[1]}; # Team cost K1 ($/year)
 param CE2{c2 in E[2]}; # Team cost K2 ($/year)
 param CE3{c3 in E[3]}; # Team cost K3 ($/year)
 
-param CE1_s{c1 in E[1]} := CE1[c1] / COST_SCALE;
-param CE2_s{c2 in E[2]} := CE2[c2] / COST_SCALE;
-param CE3_s{c3 in E[3]} := CE3[c3] / COST_SCALE;
-
 # Team relocation cost (per professional per distance unit)
 param RC1{E[1]} default 20; # Relocation cost for PHC team ($/prof/min)
 param RC2{E[2]} default 20; # Relocation cost for SHC team ($/prof/min)
 param RC3{E[3]} default 20; # Relocation cost for THC team ($/prof/min)
 
-param RC1_s{c1 in E[1]} := RC1[c1] / COST_SCALE;
-param RC2_s{c2 in E[2]} := RC2[c2] / COST_SCALE;
-param RC3_s{c3 in E[3]} := RC3[c3] / COST_SCALE;
-
-param CKM:= 1;  # Custo por km
-param M_TO_KM := 0.001; # Conversão metros para km
 
 # Se existir um D0_1 com fora do raio proposto, e.g. 16 km, inserir uma distância muito 
 # grande para não ser considerada no modelo
 # set OD := I cross L[1];
 # display OD;
-param D0_1{i in I,j1 in L[1]}; # := 10;    # The travel distance between i and level-1 PCF.   (meters)
-param D0_2{I,L[2]};    # The travel distance between i and level-2 SCF.   (meters)
-param D0_3{I,L[3]};    # The travel distance between i and level-3 TCF.   (meters)
-param D1_2{L[1],L[2]}; # The travel distance between candidate L1 and L2. (meters)
-param D1_3{L[1],L[3]}; # The travel distance between candidate L1 and L3. (meters)
-param D2_3{L[2],L[3]}; # The travel distance between candidate L2 and L3. (meters)
-
-param D0_1_KM{i in I, j1 in L[1]} := D0_1[i,j1] * M_TO_KM;
-param D0_2_KM{i in I, j2 in L[2]} := D0_2[i,j2] * M_TO_KM;
-param D0_3_KM{i in I, j3 in L[3]} := D0_3[i,j3] * M_TO_KM;
-param D1_2_KM{j1 in L[1], j2 in L[2]} := D1_2[j1,j2] * M_TO_KM;
-param D1_3_KM{j1 in L[1], j3 in L[3]} := D1_3[j1,j3] * M_TO_KM;
-param D2_3_KM{j2 in L[2], j3 in L[3]} := D2_3[j2,j3] * M_TO_KM;
+param D0_1{i in I,j1 in L[1]}; # := 10;    # The travel time between i and level-1 PCF.   (min)
+param D0_2{I,L[2]};    # The travel time between i and level-2 SCF.   (min)
+param D0_3{I,L[3]};    # The travel time between i and level-3 TCF.   (min)
+param D1_2{L[1],L[2]}; # The travel time between candidate L1 and L2. (min)
+param D1_3{L[1],L[3]}; # The travel time between candidate L1 and L3. (min)
+param D2_3{L[2],L[3]}; # The travel time between candidate L2 and L3. (min)
 
 # display min{i in I,j1 in L[1]}(D0_1[i,j1]);
 # display max{i in I,j1 in L[1]}(D0_1[i,j1]);
@@ -110,19 +91,13 @@ param D2_3_KM{j2 in L[2], j3 in L[3]} := D2_3[j2,j3] * M_TO_KM;
 # display max{i in I,j3 in L[3]}(D0_3[i,j3]);
 
 
-param D1_0{j1 in L[1], i in I} := D0_1[i,j1];    # The travel distance between i and level-1 PCF.   (meters)
-param D2_0{j2 in L[2], i in I} := D0_2[i,j2];    # The travel distance between i and level-2 SCF.   (meters)
-param D3_0{j3 in L[3], i in I} := D0_3[i,j3];    # The travel distance between i and level-3 TCF.   (meters)
-param D2_1{j2 in L[2], j1 in L[1]} := D1_2[j1,j2]; # The travel distance between candidate L1 and L2. (meters)
-param D3_1{j3 in L[3], j1 in L[1]} := D1_3[j1,j3]; # The travel distance between candidate L1 and L3. (meters)
-param D3_2{j3 in L[3], j2 in L[2]} := D2_3[j2,j3]; # The travel distance between candidate L2 and L3. (meters)
+param D1_0{j1 in L[1], i in I} := D0_1[i,j1];    # The travel time between i and level-1 PCF.   (min)
+param D2_0{j2 in L[2], i in I} := D0_2[i,j2];    # The travel time between i and level-2 SCF.   (min)
+param D3_0{j3 in L[3], i in I} := D0_3[i,j3];    # The travel time between i and level-3 TCF.   (min)
+param D2_1{j2 in L[2], j1 in L[1]} := D1_2[j1,j2]; # The travel time between candidate L1 and L2. (min)
+param D3_1{j3 in L[3], j1 in L[1]} := D1_3[j1,j3]; # The travel time between candidate L1 and L3. (min)
+param D3_2{j3 in L[3], j2 in L[2]} := D2_3[j2,j3]; # The travel time between candidate L2 and L3. (min)
 
-param D1_0_KM{j1 in L[1], i in I} := D0_1_KM[i,j1];
-param D2_0_KM{j2 in L[2], i in I} := D0_2_KM[i,j2];
-param D3_0_KM{j3 in L[3], i in I} := D0_3_KM[i,j3];
-param D2_1_KM{j2 in L[2], j1 in L[1]} := D1_2_KM[j1,j2];
-param D3_1_KM{j3 in L[3], j1 in L[1]} := D1_3_KM[j1,j3];
-param D3_2_KM{j3 in L[3], j2 in L[2]} := D2_3_KM[j2,j3];
 # set OD := EL[1] cross L[1];
 # display OD;
 # set OD := EL[2] cross L[2];
@@ -133,9 +108,6 @@ param DL1{e1 in EL[1], j1 in L[1]}; # Distance between L1 facilities (meters)
 param DL2{EL[2], L[2]} default (sum{e1 in EL[1], j1 in L[1]} DL1[e1,j1]) / (card(EL[1])*card(L[1])); # Distance between L2 facilities (meters)
 param DL3{EL[3], L[3]} default (sum{e1 in EL[1], j1 in L[1]} DL1[e1,j1]) / (card(EL[1])*card(L[1])); # Distance between L3 facilities (meters)
 
-param DL1_KM{e1 in EL[1], j1 in L[1]} := DL1[e1,j1] * M_TO_KM;
-param DL2_KM{e2 in EL[2], j2 in L[2]} := DL2[e2,j2] * M_TO_KM;
-param DL3_KM{e3 in EL[3], j3 in L[3]} := DL3[e3,j3] * M_TO_KM;
 
 # display min{i in EL[1],j1 in L[1]}(DL1[i,j1]);
 # display max{i in EL[1],j1 in L[1]}(DL1[i,j1]);
@@ -154,8 +126,8 @@ param W{I}; # The population size at demand point i (pop) (pop cluster)
 
 # Service operating capacity at IHC j
 # The capacity of a level-1 PCF in K. (pop)
-param SIZE{L[1]}, default 3, <= 5; # Porte da UBS
-param C1{j1 in L[1]} := SIZE[j1]*POP_PER_TEAM; 
+param SIZE{L[1]}, default 1, <= 5; # Porte da UBS
+param C1{j1 in L[1]} := SIZE[j1]*3000; 
 param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
 param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 
@@ -165,9 +137,9 @@ param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 # NOTE: EL[1] capacity filter uses the maximum possible expanded capacity (SIZE=5 → 15000)
 # so that demand points only reachable after expansion are included in the link sets.
 set Link01 := { (i,j1) in I cross L[1]: D0_1[i,j1] <= Dmax[1] and
-    (if j1 in EL[1] then SIZE[j1]*POP_PER_TEAM else C1[j1]) >= W[i] };
+    (if j1 in EL[1] then 5*3000 else C1[j1]) >= W[i] };
 set Link10 := { (j1,i) in L[1] cross I: D1_0[j1,i] <= Dmax[1] and
-    (if j1 in EL[1] then SIZE[j1]*POP_PER_TEAM else C1[j1]) >= W[i] };
+    (if j1 in EL[1] then 5*3000 else C1[j1]) >= W[i] };
 
 
 # display card(Link01);
@@ -240,19 +212,13 @@ set L3:= L[3] inter H3;
 # param TC2{L[1],L[2]}; # Travel cost/pat  from L1 to L2            ($/min)
 # param TC3{L[2],L[3]}; # Travel cost/pat  from L2 to L3            ($/min)
 
-param TC0_1{i in I,j1 in L[1]}:= (D0_1_KM[i,j1])*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
-param TC0_2{i in I,j2 in L[2]}:= (D0_2_KM[i,j2])*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
-param TC0_3{i in I,j3 in L[3]}:= (D0_3_KM[i,j3])*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
-param TC1_2{j1 in L[1], j2 in L[2]}:= (D1_2_KM[j1,j2])*CKM; # Travel cost/pat  from L1 to L2            ($/min)
-param TC1_3{j1 in L[1], j3 in L[3]}:= (D1_3_KM[j1,j3])*CKM; # Travel cost/pat  from L1 to L2            ($/min)
-param TC2_3{j2 in L[2], j3 in L[3]}:= (D2_3_KM[j2,j3])*CKM; # Travel cost/pat  from L2 to L3            ($/min)
-
-param TC0_1_s{i in I,j1 in L[1]}:= TC0_1[i,j1] / COST_SCALE;
-param TC0_2_s{i in I,j2 in L[2]}:= TC0_2[i,j2] / COST_SCALE;
-param TC0_3_s{i in I,j3 in L[3]}:= TC0_3[i,j3] / COST_SCALE;
-param TC1_2_s{j1 in L[1], j2 in L[2]}:= TC1_2[j1,j2] / COST_SCALE;
-param TC1_3_s{j1 in L[1], j3 in L[3]}:= TC1_3[j1,j3] / COST_SCALE;
-param TC2_3_s{j2 in L[2], j3 in L[3]}:= TC2_3[j2,j3] / COST_SCALE;
+param CKM:= 1;  # Custo por km
+param TC0_1{i in I,j1 in L[1]}:= (D0_1[i,j1]/1000)*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
+param TC0_2{i in I,j2 in L[2]}:= (D0_2[i,j2]/1000)*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
+param TC0_3{i in I,j3 in L[3]}:= (D0_3[i,j3]/1000)*CKM; # Travel cost/pat  from demand point i to L1   ($/min)
+param TC1_2{j1 in L[1], j2 in L[2]}:= (D1_2[j1,j2]/1000)*CKM; # Travel cost/pat  from L1 to L2            ($/min)
+param TC1_3{j1 in L[1], j3 in L[3]}:= (D1_3[j1,j3]/1000)*CKM; # Travel cost/pat  from L1 to L2            ($/min)
+param TC2_3{j2 in L[2], j3 in L[3]}:= (D2_3[j2,j3]/1000)*CKM; # Travel cost/pat  from L2 to L3            ($/min)
 
 
 # Fonte: Tabela APS.dat.xlsx
@@ -260,19 +226,11 @@ param VC1{L[1]},  default 3; # := 3; # Variable cost of PHC j / pop h ($/pop)
 param VC2{L[2]}; # := 0; # Variable cost of SHC j / pop h ($/pop)
 param VC3{L[3]}; # := 0; # Variable cost of THC j / pop h ($/pop)
 
-param VC1_s{j1 in L[1]} := VC1[j1] / COST_SCALE;
-param VC2_s{j2 in L[2]} := VC2[j2] / COST_SCALE;
-param VC3_s{j3 in L[3]} := VC3[j3] / COST_SCALE;
-
 # Fixed cost per period for operating PHC j    ($/year)
 # Fonte: https://cbc2022.abcustos.org.br/rest/artigo/98/semFolhaDeRosto/pdf?chaveDeAcessoNaoAutenticado=97827de5f831bdf92b6c6bd603308190ea2769c6
 param FC1{j1 in L[1]} default SIZE[j1]*3000; # 100000; # Custos administrativos: 100 mil/ano ($/year): Dado de 2022 ajustado pela inflação
 param FC2{L[2]}; # := 0; # Fixed cost per period for operating SHC j    ($/year)
 param FC3{L[3]}; # := 0; # Fixed cost per period for operating THC j    ($/year)
-
-param FC1_s{j1 in L[1]}  := FC1[j1]  / COST_SCALE;
-param FC2_s{j2 in L[2]}  := FC2[j2]  / COST_SCALE;
-param FC3_s{j3 in L[3]}  := FC3[j3]  / COST_SCALE;
 
 # ############## Amortização anual para Investimento em nova UBS ############## 
 param R:=0.04;   # Taxa de desconto anual
@@ -284,17 +242,12 @@ param I_L3:= 0; # Investimento (custo de implantação) na nova UBS: Obra, refor
 # Annualized Investment for operating NEW PHC j    ($/year)
 param IA1{CL[1]} := round(I_L1*(R*(1+R)^N)/((1+R)^N-1),0); 
 # display IA1;
-param IA1_s{j1 in CL[1]} := IA1[j1]  / COST_SCALE;
-
 # Annualized Investment for operating NEW SHC j    ($/year)
 param IA2{CL[2]}:= round(I_L2*(R*(1+R)^N)/((1+R)^N-1),0); 
 # display IA2;
-param IA2_s{j2 in CL[2]} := IA2[j2]  / COST_SCALE;
-
 # Annualized Investment for operating NEW THC j    ($/year)
 param IA3{CL[3]}:= round(I_L3*(R*(1+R)^N)/((1+R)^N-1),0); 
 # display IA3;
-param IA3_s{j3 in CL[3]} := IA3[j3]  / COST_SCALE;
 # ##############################################################################
 
 # ############## Amortização anual para Expansão de UBS EXISTENTE ##############
@@ -302,12 +255,9 @@ param IA3_s{j3 in CL[3]} := IA3[j3]  / COST_SCALE;
 # (renovation / reform cost; typically less than full new-build I_L1)
 param I_L1_exp;  # ($/SIZE unit)
 # Annualized expansion investment per SIZE unit at an existing EL[1] facility
-param IA1_exp_unit := round(I_L1_exp*(R*(1+R)^N)/((1+R)^N-1),0);
+param IA1_exp_unit := round(I_L1_exp*(R*(1+R)^N)/((1+R)^N-1), 0);
 # Incremental annual operating cost per extra SIZE unit (mirrors FC1 = SIZE*3000 formula)
-param IA1_exp_unit_s := IA1_exp_unit / COST_SCALE;
-
 param FC1_exp_unit := 3000;  # ($/year per extra SIZE unit)
-param FC1_exp_unit_s := FC1_exp_unit / COST_SCALE;
 # ###############################################################################
 
 param IVS{I}, default 0.5; # Índice de Vulnerabildade em Saude at demand point i (pop)
@@ -325,19 +275,12 @@ param LOW_IVS := min{j in I : COUNT_IVS[j] >= ceil(card(I) * 0.33) } IVS[j];
 param MED_IVS := min{j in I : COUNT_IVS[j] >= ceil(card(I) * 0.66) } IVS[j];
 param HIG_IVS := min{j in I : COUNT_IVS[j] >= card(I) } IVS[j];
 
-# # (prof/pop)
-# param PROF_POP{i in I} := 
-#     if IVS[i] <= LOW_IVS then 1/3500 # 2500 > 3500
-#         else if IVS[i] <= MED_IVS then 1/3000
-#         else if IVS[i] <= HIG_IVS then 1/2500 # 3500 > 2500
-#         else "ERROR";
-
-# IVS-adjusted population-per-team for each IVS bin
-param POP_IVS{i in I} :=
-    if IVS[i] <= LOW_IVS then 3500
-    else if IVS[i] <= MED_IVS then 3000
-    else if IVS[i] <= HIG_IVS then 2500
-    else POP_PER_TEAM;   # safe default for missing IVS
+# (prof/pop)
+param PROF_POP{i in I} := 
+    if IVS[i] <= LOW_IVS then 1/3500 # 2500 > 3500
+        else if IVS[i] <= MED_IVS then 1/3000
+        else if IVS[i] <= HIG_IVS then 1/2500 # 3500 > 2500
+        else "ERROR";
     
 # # Display IVS
 # # =================================================
@@ -345,47 +288,23 @@ param POP_IVS{i in I} :=
 # display {i in I} i, IVS[i], W[i], PROF_POP[i];
 # # =================================================
 
-# param PROP{e1 in E[1]} :=
-#     if e1 = "eSF" then 1
-#     else if e1 = "eSB" then 1
-#     else if e1 = "eMulti" then 1/9
-#     else if e1 = "ACS" then 4 # (seria uma equipe de 4 ACS)
-#     else 0;
-
-# eMulti = 1 full team per 9 PHC teams -> 1 eMulti covers 9 × POP_PER_TEAM patients
-param MULTI_SIZE := 9;   # integer: one eMulti team per MULTI_SIZE eSF teams
-
-# Scaling coefficient: POP_PER_TEAM / POP_IVS[i] — ranges [0.86, 1.20] for eSF/eSB,
-# and [0.095, 0.133] for eMulti (still small but 300x larger than before)
+param PROP{e1 in E[1]} :=
+    if e1 = "eSF" then 1
+    else if e1 = "eSB" then 1
+    else if e1 = "eMulti" then round(1/9,3)
+    else if e1 = "ACS" then 4 # (seria uma equipe de 4 ACS)
+    else 0;
 
 # Ministry of Health parameter for requirements PHC (prof/pop)
-# >>> To avoid numerical instability <<<, se separate terms in the model
-# param MS0_1{i in I, e1 in E[1]} := round(PROP[e1] * PROF_POP[i],5);
+param MS0_1{i in I, e1 in E[1]} := round(PROP[e1] * PROF_POP[i],5);
 # display MS0_1;
-# param TEAM_SCALE{i in I, e in E[1]} := PROP[e] * (POP_PER_TEAM / POP_IVS[i]);
-param TEAM_SCALE0_1{i in I, e in E[1]} :=
-    if e = "eMulti" then 1.0 / (MULTI_SIZE * POP_IVS[i])
-    else if e = "ACS"    then 4.0 / POP_IVS[i]
-    else                      1.0 / POP_IVS[i]; # eSF, eSB
+
 
 # (prof/patient)
-# param PROF_PAT := round(1/3000,5);
-# param POP_PER_TEAM := 3000;   # (já declarado) patients served per full team  (integer)
-
-# param MS1{e1 in E[1]} := round(PROP[e1]*PROF_PAT, 6);
-# param MS2{E[2]} := round(1/3000,5); # Ministry of Health parameter for requirements SHC (prof/pop)
-# param MS3{E[3]} := round(1/3000,5); # Ministry of Health parameter for requirements THC (prof/pop)
-# >>> To avoid numerical instability <<<, se separate terms in the model
-
-# MS1 is now only used inside ceil() for MAX_NEW_HIRE — use exact integer division
-# param MS1{e1 in E[1]} := round(PROP[e1]*PROF_PAT, 6);
-param TEAM_SCALE1{e in E[1]} :=
-    if e = "eMulti" then 1 / (MULTI_SIZE * POP_PER_TEAM) # exact 1/9, no rounding
-    else if e = "ACS"    then 4.0 / POP_PER_TEAM
-    else                      1.0 / POP_PER_TEAM; # eSF, eSB
-
-# param MS2{E[2]} := round(1/3000,5); # Ministry of Health parameter for requirements SHC (prof/pop)
-# param MS3{E[3]} := round(1/3000,5); # M
+param PROF_PAT := round(1/3000,5);
+param MS1{e1 in E[1]} := round(PROP[e1]*PROF_PAT, 6);
+param MS2{E[2]} := round(1/3000,5); # Ministry of Health parameter for requirements SHC (prof/pop)
+param MS3{E[3]} := round(1/3000,5); # Ministry of Health parameter for requirements THC (prof/pop)
 
 param CNES1{E[1],EL[1]}; # Health professional teams PHC at location L1 (prof)
 param CNES2{E[2],EL[2]}; # Health professional teams PHC at location L2 (prof)
@@ -395,16 +314,10 @@ param CNES3{E[3],EL[3]}; # Health professional teams PHC at location L3 (prof)
 # For EL[1]: use max expanded capacity (SIZE=5 → 15000) so hiring is never capped
 # below what a fully-expanded facility would require.
 param MAX_NEW_HIRE1{e1 in E[1], j1 in L[1]} :=
-    # if j1 in EL[1] then ceil(5*3000*MS1[e1])
-    # else ceil(C1[j1]*MS1[e1]);
-    if e1 = "eMulti" then ceil(5 * POP_PER_TEAM / (MULTI_SIZE * POP_PER_TEAM)) # = ceil(5/9) = 1
-    else if e1 = "ACS" then ceil(5 * POP_PER_TEAM * 4 / POP_PER_TEAM) # = 20
-    else                    ceil(5);   # eSF/eSB: 1 team per POP_PER_TEAM exactly
-
-# param MAX_NEW_HIRE2{e2 in E[2], j2 in L[2]} := ceil(C2[j2]*MS2[e2]);
-# param MAX_NEW_HIRE3{e3 in E[3], j3 in L[3]} := ceil(C3[j3]*MS3[e3]);
-param MAX_NEW_HIRE2{e2 in E[2], j2 in L[2]} := ceil(C2[j2] / POP_PER_TEAM);
-param MAX_NEW_HIRE3{e3 in E[3], j3 in L[3]} := ceil(C3[j3] / POP_PER_TEAM);
+    if j1 in EL[1] then ceil(5*3000*MS1[e1])
+    else ceil(C1[j1]*MS1[e1]);
+param MAX_NEW_HIRE2{e2 in E[2], j2 in L[2]} := ceil(C2[j2]*MS2[e2]);
+param MAX_NEW_HIRE3{e3 in E[3], j3 in L[3]} := ceil(C3[j3]*MS3[e3]);
 
 # display MAX_NEW_HIRE1;
 # display MAX_NEW_HIRE2;
@@ -481,10 +394,6 @@ param ExistingCost :=
     sum{j2 in EL[2] inter L2}FC2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] + 
     sum{j3 in EL[3] inter L3}FC3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e];
 
-# display MinCostPerNewPHC;
-# display MinCostPerNewSHC;
-# display MinCostPerNewTHC;
-
 # # BUDGET ANALYSIS
 # # ====================================================
 # display BUDGET;
@@ -530,10 +439,6 @@ param MaxNewTHC := if card(CL[3] inter L3) > 0 and MinCostPerNewTHC > 0 then
 param P1:= min((sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1]) + sum{j1 in L1, c1 in E[1]}CE1[c1])*10, sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to} RC1[e1]*DL1[from,to]*CE1[e1]);
 param P2:= min(sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to} RC2[e2]*DL2[from,to]*CE2[e2],P1);
 param P3:= min(sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to} RC3[e3]*DL3[from,to]*CE3[e3],P1);
-
-param P1_s := P1 / COST_SCALE;
-param P2_s := P2 / COST_SCALE;
-param P3_s := P3 / COST_SCALE;
 
 # display P1;
 # display (sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1]) + sum{j1 in L1, c1 in E[1]}CE1[c1])*10;
@@ -585,8 +490,7 @@ var y3{j3 in L3}, >=0, binary; # 1, if a L-3 TCF is used
 # Effective capacity becomes C1[j1] + extra_size1[j1]*3000
 # Bound: SIZE[j1] + extra_size1[j1] <= 5  (max real size = 5)
 # ---------------------------------------------------------------
-# var extra_size1{j1 in EL[1] inter L1}, integer, >= 0, <= 3; # - SIZE[j1];
-var extra_size1{j1 in L[1] inter L1}, integer, >= 0, <= 5 - SIZE[j1];
+var extra_size1{j1 in EL[1] inter L1}, integer, >= 0, <= 5 - SIZE[j1];
 # var extra_size1{j1 in EL[1] inter L1}, integer, >= 0;
 
 
@@ -595,26 +499,21 @@ var extra_size1{j1 in L[1] inter L1}, integer, >= 0, <= 5 - SIZE[j1];
 
 # Patient flows “fluxo de ida”
 var u0_1{i in I, j1 in L1: (i,j1) in Link01}, >=0, <= W[i];  # The flow between demand point i and L1 (pop)
-# per-node bounds derived from problem structure
-param MaxFlow1{j1 in L1} := sum{i in I: (i,j1) in Link01} W[i];
-var u1_2{j1 in L1, j2 in L2: (j1,j2) in Link12}, >=0, <= MaxFlow1[j1];  # The flow between L1 and L2 (pop)
-
-param MaxFlow2{j2 in L2} := sum{i in I: (i,j2) in Link02} W[i];
-var u2_3{j2 in L2, j3 in L3: (j2,j3) in Link23}, >=0, <= MaxFlow2[j2];  # The flow between L2 and L3 (pop)
+var u1_2{j1 in L1, j2 in L2: (j1,j2) in Link12}, >=0, <= sum{i in I}W[i];  # The flow between L1 and L2 (pop)
+var u2_3{j2 in L2, j3 in L3: (j2,j3) in Link23}, >=0, <= sum{i in I}W[i];  # The flow between L2 and L3 (pop)
 
 var u0_2{i in I, j2 in L2: (i,j2) in Link02} >= 0, <= W[i];  # Casa → Clínica (bypass UBS)
 var u0_3{i in I, j3 in L3: (i,j3) in Link03} >= 0, <= W[i];  # Casa → Hospital (bypass UBS e clínica)
-var u1_3{j1 in L1, j3 in L3: (j1,j3) in Link13} >= 0, <= MaxFlow1[j1];  # UBS → Hospital (encaminhamento direto)
+var u1_3{j1 in L1, j3 in L3: (j1,j3) in Link13} >= 0, <= sum{i in I}W[i];  # UBS → Hospital (encaminhamento direto)
 
 # Fluxos de “passo inverso” (step-down)
-param MaxFlow3{j3 in L3} := sum{i in I: (i,j3) in Link03} W[i];
-var u3_2{j3 in L3, j2 in L2: (j3,j2) in Link32} >= 0, <= MaxFlow3[j3];  # Alta hospitalar → clínica
-var u3_1{j3 in L3, j1 in L1: (j3,j1) in Link31} >= 0, <= MaxFlow3[j3];  # Alta hospitalar → UBS
-var u2_1{j2 in L2, j1 in L1: (j2,j1) in Link21} >= 0, <= MaxFlow2[j2];  # Retorno da clínica → UBS
+var u3_2{j3 in L3, j2 in L2: (j3,j2) in Link32} >= 0, <= sum{i in I}W[i];  # Alta hospitalar → clínica
+var u3_1{j3 in L3, j1 in L1: (j3,j1) in Link31} >= 0, <= sum{i in I}W[i];  # Alta hospitalar → UBS
+var u2_1{j2 in L2, j1 in L1: (j2,j1) in Link21} >= 0, <= sum{i in I}W[i];  # Retorno da clínica → UBS
 
-var u3_0{j3 in L3, i in I: (j3,i) in Link30} >= 0, <= MaxFlow3[j3];  # Alta hospitalar → Casa
-var u2_0{j2 in L2, i in I: (j2,i) in Link20} >= 0, <= MaxFlow2[j2];  # Retorno Clínica → Casa
-var u1_0{j1 in L1, i in I: (j1,i) in Link10} >= 0, <= MaxFlow1[j1];  # Alta UBS → Casa
+var u3_0{j3 in L3, i in I: (j3,i) in Link30} >= 0, <= W[i];  # Alta hospitalar → Casa
+var u2_0{j2 in L2, i in I: (j2,i) in Link20} >= 0, <= W[i];  # Retorno Clínica → Casa
+var u1_0{j1 in L1, i in I: (j1,i) in Link10} >= 0, <= W[i];  # Alta UBS → Casa
 
 
 # fluxos de telemedicina (Casa -> unidade que presta teleconsulta)
@@ -637,9 +536,9 @@ var surplus3{E[3], L3}, >= 0; # Surplus of prof e at existing L3 (prof)
 
 
 # Team transfer variables (from existing location to any location with deficit)
-var transfer1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, integer, >= 0, <= CNES1[e1,from] + MAX_NEW_HIRE1[e1,to];
-var transfer2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, integer, >= 0, <= CNES2[e2,from] + MAX_NEW_HIRE2[e2,to];
-var transfer3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, integer, >= 0, <= CNES3[e3,from] + MAX_NEW_HIRE3[e3,to];
+var transfer1{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}, integer, >= 0;
+var transfer2{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}, integer, >= 0;
+var transfer3{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}, integer, >= 0;
 
 
 # Variables (add to variable section)
@@ -654,8 +553,7 @@ var newhire2{e2 in E[2], j2 in L2}, integer, >= 0, <= MAX_NEW_HIRE2[e2,j2];
 var newhire3{e3 in E[3], j3 in L3}, integer, >= 0, <= MAX_NEW_HIRE3[e3,j3]; 
 
 
-# var Total_Costs_APS, >=0; # Aux variable for report
-var Total_Costs_APS_s, >=0; # Aux variable for report
+var Total_Costs_APS, >=0; # Aux variable for report
 
 #################################################
 # CONSTRAINTS
@@ -704,12 +602,9 @@ s.t. FlowImpliesLink_In  {i in I, j1 in L1: (i,j1) in Link01}: u1_0[j1,i] <= W[i
 
 
 # s.t. R0{i in I, j1 in L1}: W[i]*y[i,j1] = u0_1[i,j1];
-# s.t. R0e{i in I, j1 in L1: (i,j1) in Link01}: W[i]*y0_1[i,j1] = u0_1[i,j1] + ut1[i,j1];
-# s.t. R0f{i in I, j2 in L2: (i,j2) in Link02}: W[i]*y0_2[i,j2] = u0_2[i,j2] + ut2[i,j2];
-# s.t. R0g{i in I, j3 in L3: (i,j3) in Link03}: W[i]*y0_3[i,j3] = u0_3[i,j3] + ut3[i,j3];
-s.t. R0e{i in I, j1 in L1: (i,j1) in Link01 and W[i] > 0}: y0_1[i,j1] = (u0_1[i,j1] + ut1[i,j1]) / W[i];
-s.t. R0f{i in I, j2 in L2: (i,j2) in Link02 and W[i] > 0}: y0_2[i,j2] = (u0_2[i,j2] + ut2[i,j2]) / W[i];
-s.t. R0g{i in I, j3 in L3: (i,j3) in Link03 and W[i] > 0}: y0_3[i,j3] = (u0_3[i,j3] + ut3[i,j3]) / W[i];
+s.t. R0e{i in I, j1 in L1: (i,j1) in Link01}: W[i]*y0_1[i,j1] = u0_1[i,j1] + ut1[i,j1];
+s.t. R0f{i in I, j2 in L2: (i,j2) in Link02}: W[i]*y0_2[i,j2] = u0_2[i,j2] + ut2[i,j2];
+s.t. R0g{i in I, j3 in L3: (i,j3) in Link03}: W[i]*y0_3[i,j3] = u0_3[i,j3] + ut3[i,j3];
 
 # Percentual maximo de Atendimentos Telemedicina de casa > PHC, SHC, THC
 s.t. R0h{i in I, j1 in L1: (i,j1) in Link01}: ut1[i,j1] <= MAX_TELE_PHC * u0_1[i,j1];
@@ -937,64 +832,23 @@ s.t. NoSendIfReceiveTHC{e3 in E[3], j3 in EL[3] inter L3}:
 #################################################
 # CNES (existente) - Necessário + Transferências OUT - Transferências IN + Novas Contratações = Excesso - Déficit
 # For EXISTING locations: calculate surplus/deficit
-# s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
-#     CNES1[e1,j1]  # Existing teams
-#     # Required teams based on patient flow    
-#     - (sum{i in I: (i,j1) in Link01} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] 
-#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]*MS1[e1] 
-#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]*MS1[e1])
-#     + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
-#     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
-#     + newhire1[e1,j1]  # New teams hired
-#     = surplus1[e1,j1] - deficit1[e1,j1];
-
-s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:    
-    CNES1[e1,j1]
-    - (sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1])  * (TEAM_SCALE0_1[i,e1])
-    + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1]               * (TEAM_SCALE1[e1])
-    + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1]               * (TEAM_SCALE1[e1]))
-    + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
-    - sum{to   in L1:             to   != j1} transfer1[e1,j1,to]
-    + newhire1[e1,j1]
-    = (surplus1[e1,j1] - deficit1[e1,j1]);
-
-# s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:    
-#     POP_PER_TEAM * CNES1[e1,j1]
-#     - sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1])  * (TEAM_SCALE0_1[i,e1]*POP_IVS[i])
-#     - sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1]               * (TEAM_SCALE1[e1]* POP_PER_TEAM)
-#     - sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1]               * (TEAM_SCALE1[e1]* POP_PER_TEAM)    
-#     + POP_PER_TEAM * sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
-#     - POP_PER_TEAM * sum{to   in L1:             to   != j1} transfer1[e1,j1,to]
-#     + POP_PER_TEAM * newhire1[e1,j1]
-#     = POP_PER_TEAM * (surplus1[e1,j1] - deficit1[e1,j1]);
+s.t. TeamBalance1e{j1 in EL[1] inter L1, e1 in E[1]}:
+    CNES1[e1,j1]  # Existing teams
+    # Required teams based on patient flow    
+    - (sum{i in I: (i,j1) in Link01} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]*MS1[e1])
+    + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
+    - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
+    + newhire1[e1,j1]  # New teams hired
+    = surplus1[e1,j1] - deficit1[e1,j1];
 
 
-
-# # For CANDIDATE locations: only new hires and transfers IN
-# s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
-#     # Required teams
-#     - (sum{i in I: (i,j1) in Link01} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]*MS1[e1])
-#     + sum{from in EL[1] inter L1}transfer1[e1,from,j1]  # Transfers IN
-#     + newhire1[e1,j1]  # New hires
-#     = surplus1[e1,j1] - deficit1[e1,j1];
-
+# For CANDIDATE locations: only new hires and transfers IN
 s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
-    # No CNES term (candidates start with zero teams)
-    - (sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1]) * (TEAM_SCALE0_1[i,e1])
-    + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1]               * (TEAM_SCALE1[e1])
-    + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1]               * (TEAM_SCALE1[e1]))
-    + sum{from in EL[1] inter L1} transfer1[e1,from,j1]
-    + newhire1[e1,j1]
-    = (surplus1[e1,j1] - deficit1[e1,j1]);
-
-# s.t. TeamBalance1c{j1 in CL[1] inter L1, e1 in E[1]}:
-#     # No CNES term (candidates start with zero teams)
-#     - sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1])  * (TEAM_SCALE0_1[i,e1]*POP_IVS[i])
-#     - sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1]               * (TEAM_SCALE1[e1]* POP_PER_TEAM)
-#     - sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1]               * (TEAM_SCALE1[e1]* POP_PER_TEAM)
-#     + POP_PER_TEAM * sum{from in EL[1] inter L1} transfer1[e1,from,j1]
-#     + POP_PER_TEAM * newhire1[e1,j1]
-#     = POP_PER_TEAM * (surplus1[e1,j1] - deficit1[e1,j1]);
+    # Required teams
+    - (sum{i in I: (i,j1) in Link01} (u0_1[i,j1]+ut1[i,j1])*MS0_1[i,e1] + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]*MS1[e1])
+    + sum{from in EL[1] inter L1}transfer1[e1,from,j1]  # Transfers IN
+    + newhire1[e1,j1]  # New hires
+    = surplus1[e1,j1] - deficit1[e1,j1];
 
 # Surplus can only come from existing locations with teams
 s.t. SurplusLimit1{e1 in E[1], j1 in EL[1] inter L1}:
@@ -1068,8 +922,7 @@ s.t. Team_SF_equal_SBc{j1 in CL[1] inter L1}:
 # Prevents: PHC1→PHC10 (transfer) + hire at PHC1
 # Enforces: hire at PHC10 directly
 s.t. DetectTransferOut1a{e1 in E[1], j1 in EL[1] inter L1}:
-    # sum{to in L1: to != j1}transfer1[e1,j1,to] >= 0.01 * HasTransferOut1[e1,j1];
-    sum{to in L1: to != j1}transfer1[e1,j1,to] >= HasTransferOut1[e1,j1];
+    sum{to in L1: to != j1}transfer1[e1,j1,to] >= 0.01 * HasTransferOut1[e1,j1];
 
 s.t. DetectTransferOut1b{e1 in E[1], j1 in EL[1] inter L1}:
     sum{to in L1: to != j1}transfer1[e1,j1,to] <= CNES1[e1,j1] * HasTransferOut1[e1,j1];
@@ -1081,61 +934,23 @@ s.t. NoHireIfTransferOut1{e1 in E[1], j1 in EL[1] inter L1}:
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 2 (SHC)
 #################################################
-# # CNES (existente) - Necessário + Transferências OUT - Transferências IN + Novas Contratações = Excesso - Déficit
-# s.t. TeamBalance2e{j2 in EL[2] inter L2, e2 in E[2]}:
-#     CNES2[e2,j2] # Existing teams
-#     # Required teams based on patient flow    
-#     - (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])*MS2[e2]
-#     + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
-#     - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
-#     + newhire2[e2,j2]
-#     = surplus2[e2,j2] - deficit2[e2,j2];
-
+# CNES (existente) - Necessário + Transferências OUT - Transferências IN + Novas Contratações = Excesso - Déficit
 s.t. TeamBalance2e{j2 in EL[2] inter L2, e2 in E[2]}:
-    # All flow coefficients = 1  (MS2 × POP_PER_TEAM = 1)
-    CNES2[e2,j2]
-    - (sum{i  in I:  (i,j2)  in Link02} (u0_2[i,j2]  + ut2[i,j2])   
-    + sum{j1 in L1: (j1,j2) in Link12}  u1_2[j1,j2]                 
-    + sum{j3 in L3: (j3,j2) in Link32}  u3_2[j3,j2]) * (1/POP_PER_TEAM) 
-    + sum{from in EL[2] inter L2: from != j2} transfer2[e2,from,j2]
-    - sum{to   in L2:             to   != j2} transfer2[e2,j2,to]
+    CNES2[e2,j2] # Existing teams
+    # Required teams based on patient flow    
+    - (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])*MS2[e2]
+    + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
+    - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
     + newhire2[e2,j2]
-    = (surplus2[e2,j2] - deficit2[e2,j2]);
+    = surplus2[e2,j2] - deficit2[e2,j2];
 
-# s.t. TeamBalance2e{j2 in EL[2] inter L2, e2 in E[2]}:
-#     # All flow coefficients = 1  (MS2 × POP_PER_TEAM = 1)
-#     POP_PER_TEAM * CNES2[e2,j2]
-#     - sum{i  in I:  (i,j2)  in Link02} (u0_2[i,j2]  + ut2[i,j2]) #* (1/POP_PER_TEAM) # coeff = 1
-#     - sum{j1 in L1: (j1,j2) in Link12}  u1_2[j1,j2]              #* (1/POP_PER_TEAM)  # coeff = 1
-#     - sum{j3 in L3: (j3,j2) in Link32}  u3_2[j3,j2]              #* (1/POP_PER_TEAM) # coeff = 1
-#     + POP_PER_TEAM * sum{from in EL[2] inter L2: from != j2} transfer2[e2,from,j2]
-#     - POP_PER_TEAM * sum{to   in L2:             to   != j2} transfer2[e2,j2,to]
-#     + POP_PER_TEAM * newhire2[e2,j2]
-#     = POP_PER_TEAM * (surplus2[e2,j2] - deficit2[e2,j2]);
-
-
-# s.t. TeamBalance2c{j2 in CL[2] inter L2, e2 in E[2]}:
-#     # Required teams based on patient flow 
-#     - (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])*MS2[e2]
-#     + sum{from in EL[2] inter L2}transfer2[e2,from,j2] # Teams transferred IN
-#     + newhire2[e2,j2]
-#     = surplus2[e2,j2] - deficit2[e2,j2];
 
 s.t. TeamBalance2c{j2 in CL[2] inter L2, e2 in E[2]}:
-    - (sum{i  in I:  (i,j2)  in Link02} (u0_2[i,j2]  + ut2[i,j2]) 
-    + sum{j1 in L1: (j1,j2) in Link12}  u1_2[j1,j2]              
-    + sum{j3 in L3: (j3,j2) in Link32}  u3_2[j3,j2] ) * (1/POP_PER_TEAM)
-    + sum{from in EL[2] inter L2} transfer2[e2,from,j2]
+    # Required teams based on patient flow 
+    - (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])*MS2[e2]
+    + sum{from in EL[2] inter L2}transfer2[e2,from,j2] # Teams transferred IN
     + newhire2[e2,j2]
-    = (surplus2[e2,j2] - deficit2[e2,j2]);
-
-# s.t. TeamBalance2c{j2 in CL[2] inter L2, e2 in E[2]}:
-#     - sum{i  in I:  (i,j2)  in Link02} (u0_2[i,j2]  + ut2[i,j2]) #* (1/POP_PER_TEAM)
-#     - sum{j1 in L1: (j1,j2) in Link12}  u1_2[j1,j2]              #* (1/POP_PER_TEAM) 
-#     - sum{j3 in L3: (j3,j2) in Link32}  u3_2[j3,j2]              #* (1/POP_PER_TEAM)
-#     + POP_PER_TEAM * sum{from in EL[2] inter L2} transfer2[e2,from,j2]
-#     + POP_PER_TEAM * newhire2[e2,j2]
-#     = POP_PER_TEAM * (surplus2[e2,j2] - deficit2[e2,j2]);
+    = surplus2[e2,j2] - deficit2[e2,j2];
 
 s.t. SurplusLimit2{e2 in E[2], j2 in EL[2] inter L2}:
     surplus2[e2,j2] <= CNES2[e2,j2];
@@ -1158,62 +973,24 @@ s.t. NoHireIfTransferOut2{e2 in E[2], j2 in EL[2] inter L2}:
 #################################################
 # TEAM BALANCE CONSTRAINTS - LEVEL 3 (THC)
 #################################################
-# # CNES (existente) - Necessário + Transferências OUT - Transferências IN + Novas Contratações = Excesso - Déficit
-# s.t. TeamBalance3e{j3 in EL[3] inter L3, e3 in E[3]}:
-#     CNES3[e3,j3] # Existing teams
-#     # Required teams based on patient flow 
-#     - (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])*MS3[e3]
-#     + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
-#     - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
-#     + newhire3[e3,j3]
-#     = surplus3[e3,j3] - deficit3[e3,j3];
-
+# CNES (existente) - Necessário + Transferências OUT - Transferências IN + Novas Contratações = Excesso - Déficit
 s.t. TeamBalance3e{j3 in EL[3] inter L3, e3 in E[3]}:
-    CNES3[e3,j3]
-    - (sum{i  in I:  (i,j3)  in Link03} (u0_3[i,j3]  + ut3[i,j3])
-    + sum{j1 in L1: (j1,j3) in Link13}  u1_3[j1,j3]              
-    + sum{j2 in L2: (j2,j3) in Link23}  u2_3[j2,j3]) * (1/POP_PER_TEAM)
-    + sum{from in EL[3] inter L3: from != j3} transfer3[e3,from,j3]
-    - sum{to   in L3:             to   != j3} transfer3[e3,j3,to]
+    CNES3[e3,j3] # Existing teams
+    # Required teams based on patient flow 
+    - (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])*MS3[e3]
+    + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
+    - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
     + newhire3[e3,j3]
-    = (surplus3[e3,j3] - deficit3[e3,j3]);
-
-# s.t. TeamBalance3e{j3 in EL[3] inter L3, e3 in E[3]}:
-#     POP_PER_TEAM * CNES3[e3,j3]
-#     - sum{i  in I:  (i,j3)  in Link03} (u0_3[i,j3]  + ut3[i,j3]) #* (1/POP_PER_TEAM)
-#     - sum{j1 in L1: (j1,j3) in Link13}  u1_3[j1,j3]              #* (1/POP_PER_TEAM)
-#     - sum{j2 in L2: (j2,j3) in Link23}  u2_3[j2,j3]              #* (1/POP_PER_TEAM)
-#     + POP_PER_TEAM * sum{from in EL[3] inter L3: from != j3} transfer3[e3,from,j3]
-#     - POP_PER_TEAM * sum{to   in L3:             to   != j3} transfer3[e3,j3,to]
-#     + POP_PER_TEAM * newhire3[e3,j3]
-#     = POP_PER_TEAM * (surplus3[e3,j3] - deficit3[e3,j3]);
+    = surplus3[e3,j3] - deficit3[e3,j3];
 
     
 
-    
-
-# s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}: 
-#     # Required teams based on patient flow 
-#     - (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])*MS3[e3]
-#     + sum{from in EL[3] inter L3}transfer3[e3,from,j3] # Teams transferred IN
-#     + newhire3[e3,j3]
-#     = surplus3[e3,j3] - deficit3[e3,j3];
-
-s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}:
-    - sum{i  in I:  (i,j3)  in Link03} (u0_3[i,j3]  + ut3[i,j3])
-    - sum{j1 in L1: (j1,j3) in Link13}  u1_3[j1,j3]
-    - sum{j2 in L2: (j2,j3) in Link23}  u2_3[j2,j3]
-    + sum{from in EL[3] inter L3} transfer3[e3,from,j3]
+s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}: 
+    # Required teams based on patient flow 
+    - (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])*MS3[e3]
+    + sum{from in EL[3] inter L3}transfer3[e3,from,j3] # Teams transferred IN
     + newhire3[e3,j3]
-    = (surplus3[e3,j3] - deficit3[e3,j3]);
-
-# s.t. TeamBalance3c{j3 in CL[3] inter L3, e3 in E[3]}:
-#     - sum{i  in I:  (i,j3)  in Link03} (u0_3[i,j3]  + ut3[i,j3])
-#     - sum{j1 in L1: (j1,j3) in Link13}  u1_3[j1,j3]
-#     - sum{j2 in L2: (j2,j3) in Link23}  u2_3[j2,j3]
-#     + POP_PER_TEAM * sum{from in EL[3] inter L3} transfer3[e3,from,j3]
-#     + POP_PER_TEAM * newhire3[e3,j3]
-#     = POP_PER_TEAM * (surplus3[e3,j3] - deficit3[e3,j3]);
+    = surplus3[e3,j3] - deficit3[e3,j3];
 
 s.t. SurplusLimit3{e3 in E[3], j3 in EL[3] inter L3}:
     surplus3[e3,j3] <= CNES3[e3,j3];
@@ -1235,8 +1012,6 @@ s.t. NoHireIfTransferOut3{e3 in E[3], j3 in EL[3] inter L3}:
 #################################################
 # CAPACITY CONSTRAINTS
 #################################################
-s.t. ExtraSizeOnlyIfOpen1_Strong{j1 in L1}:
-    extra_size1[j1] <= (5 - SIZE[j1]) * y1[j1];
 
 # Existing locations — capacity is base C1[j1] plus any approved expansion
 s.t. R6e{j1 in EL[1] inter L1}: 
@@ -1244,7 +1019,7 @@ s.t. R6e{j1 in EL[1] inter L1}:
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              # L3 → L1
     + sum{i in I: (i,j1) in Link01} ut1[i,j1]
-    <= C1[j1] + extra_size1[j1]*POP_PER_TEAM;                          # expandable capacity
+    <= C1[j1] + extra_size1[j1]*3000;                          # expandable capacity
 
 s.t. R7e{j2 in EL[2] inter L2}: 
     sum{i in I: (i,j2) in Link02}u0_2[i,j2] 
@@ -1261,8 +1036,8 @@ s.t. R8e{j3 in EL[3] inter L3}:
 s.t. R9e{j1 in EL[1] inter L1}: 
     sum{i in I: (j1,i) in Link10}u1_0[j1,i]                   # L1 → Home
     + sum{j2 in L2: (j1,j2) in Link12}u1_2[j1,j2]              # L1 → L2
-    + sum{j3 in L3: (j1,j3) in Link13}u1_3[j1,j3]              # L1 → L3
-    <= C1[j1] + extra_size1[j1]*POP_PER_TEAM;                 # (expandable)
+    + sum{j3 in L3: (j1,j3) in Link13}u1_3[j1,j3]
+    <= C1[j1] + extra_size1[j1]*3000;                          # L1 → L3 (expandable)
 
 s.t. R10e{j2 in EL[2] inter L2}: 
     sum{i in I: (j2,i) in Link20}u2_0[j2,i]                   # L2 → Home
@@ -1280,8 +1055,7 @@ s.t. R6c{j1 in CL[1] inter L1}:
     sum{i in I: (i,j1) in Link01}u0_1[i,j1]                   # Home → L1
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              # L3 → L1
-    + sum{i in I: (i,j1) in Link01} ut1[i,j1] 
-    <= C1[j1]*y1[j1] + extra_size1[j1]*POP_PER_TEAM;
+    + sum{i in I: (i,j1) in Link01} ut1[i,j1] <= C1[j1]*y1[j1];
 
 s.t. R7c{j2 in CL[2] inter L2}: 
     sum{i in I: (i,j2) in Link02}u0_2[i,j2] 
@@ -1298,8 +1072,7 @@ s.t. R8c{j3 in CL[3] inter L3}:
 s.t. R9c{j1 in CL[1] inter L1}: 
     sum{i in I: (j1,i) in Link10}u1_0[j1,i]                   # L1 → Home
     + sum{j2 in L2: (j1,j2) in Link12}u1_2[j1,j2]              # L1 → L2
-    + sum{j3 in L3: (j1,j3) in Link13}u1_3[j1,j3]              # L1 → L3
-    <= C1[j1]*y1[j1] + extra_size1[j1]*POP_PER_TEAM;   
+    + sum{j3 in L3: (j1,j3) in Link13}u1_3[j1,j3] <= C1[j1]*y1[j1];   # L1 → L3
 
 s.t. R10c{j2 in CL[2] inter L2}: 
     sum{i in I: (j2,i) in Link20}u2_0[j2,i]                   # L2 → Home
@@ -1317,251 +1090,170 @@ s.t. R13c: sum{j2 in CL[2] inter L2}y2[j2] <= MaxNewSHC;
 s.t. R14c: sum{j3 in CL[3] inter L3}y3[j3] <= MaxNewTHC;
 
 
-# s.t. APSCost: Total_Costs_APS = 
-#     # Existing facilities cost    
-#     sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
-#     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
-#     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e]
-#     # Existing PHC expansion cost (annualised investment + incremental operating cost)
-#     + sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1]
-#     # New facilities fixed cost    
-#     + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
-#     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
-#     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]
-    
-#     # # New staff cost
-#     # + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
-#     # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
-#     # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
-#     + sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
-# 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
-#     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
-#     + newhire1[e1,j1])  # New teams hired
-#     + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
-# 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
-#     + newhire1[e1,j1])  # New teams hired
 
-#     + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
-# 	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
-#     - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
-#     + newhire2[e2,j2]) # New teams hired
-#     + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
-# 	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
-#     + newhire2[e2,j2]) # New teams hired
-	
-#     + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
-# 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
-#     - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
-#     + newhire3[e3,j3]) # New teams hired
-#     + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
-# 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
-#     + newhire3[e3,j3]) # New teams hired
-
-#     # Variable costs
-#     + sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]                   # Home → L1
-#     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
-#     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              # L3 → L1
-#     + sum{i in I: (i,j1) in Link01} ut1[i,j1])                # Telehealth in L1
-#     + sum{j2 in L2}VC2[j2]*(sum{i in I: (i,j2) in Link02}u0_2[i,j2] 
-#     + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
-#     + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]
-#     + sum{i in I: (i,j2) in Link02} ut2[i,j2])
-#     + sum{j3 in L3}VC3[j3]*(sum{i in I: (i,j3) in Link03} u0_3[i,j3] 
-#     + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
-#     + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]
-#     + sum{i in I: (i,j3) in Link03} ut3[i,j3])
-#     # NO patients Transportation costs  
-#     # Re-assignment costs:  Transfer IN
-#     + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-#          RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
-#     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-#          RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
-#     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-#          RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
-#     # Re-assignment costs:  Transfer OUT
-#     + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
-#         RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
-#     + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
-#         RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
-#     + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
-#         RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to]
-#          ;
-#     # NO Penalty for surplus or deficit
-
-s.t. APSCost: Total_Costs_APS_s = 
+s.t. APSCost: Total_Costs_APS = 
     # Existing facilities cost    
-    sum{j1 in EL[1] inter L1}FC1_s[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1_s[e]  
-    + sum{j2 in EL[2] inter L2}FC2_s[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2_s[e] 
-    + sum{j3 in EL[3] inter L3}FC3_s[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3_s[e]
-    # sum{j1 in EL[1] inter L1}FC1_s[j1]*y1[j1] 
-    # + sum{j2 in EL[2] inter L2}FC2_s[j2]*y2[j2]
-    # + sum{j3 in EL[3] inter L3}FC3_s[j3]*y3[j3]
+    sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
+    + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
+    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e]
     # Existing PHC expansion cost (annualised investment + incremental operating cost)
-    # + sum{j1 in EL[1] inter L1}(IA1_exp_unit_s + FC1_exp_unit_s)*extra_size1[j1]
-    + sum{j1 in L[1] inter L1}(IA1_exp_unit_s + FC1_exp_unit_s)*extra_size1[j1]
+    + sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1]
     # New facilities fixed cost    
-    + sum{j1 in CL[1] inter L1}(FC1_s[j1]+IA1_s[j1])*y1[j1] 
-    + sum{j2 in CL[2] inter L2}(FC2_s[j2]+IA2_s[j2])*y2[j2] 
-    + sum{j3 in CL[3] inter L3}(FC3_s[j3]+IA3_s[j3])*y3[j3]
+    + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
+    + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
+    + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]
     
     # # New staff cost
     # + sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
     # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
     # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3]
-    + sum{j1 in EL[1], e1 in E[1]}CE1_s[e1]*(
+    + sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
     + newhire1[e1,j1])  # New teams hired
-    + sum{j1 in CL[1], e1 in E[1]}CE1_s[e1]*(
+    + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
     + newhire1[e1,j1])  # New teams hired
 
-    + sum{j2 in EL[2], e2 in E[2]}CE2_s[e2]*(
+    + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
 	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
     - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
     + newhire2[e2,j2]) # New teams hired
-    + sum{j2 in CL[2], e2 in E[2]}CE2_s[e2]*(
+    + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
 	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
     + newhire2[e2,j2]) # New teams hired
 	
-    + sum{j3 in EL[3], e3 in E[3]}CE3_s[e3]*(
+    + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
     - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
     + newhire3[e3,j3]) # New teams hired
-    + sum{j3 in CL[3], e3 in E[3]}CE3_s[e3]*(
+    + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
     + newhire3[e3,j3]) # New teams hired
 
     # Variable costs
-    + sum{j1 in L1}VC1_s[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]                   # Home → L1
+    + sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]                   # Home → L1
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              # L3 → L1
     + sum{i in I: (i,j1) in Link01} ut1[i,j1])                # Telehealth in L1
-    + sum{j2 in L2}VC2_s[j2]*(sum{i in I: (i,j2) in Link02}u0_2[i,j2] 
+    + sum{j2 in L2}VC2[j2]*(sum{i in I: (i,j2) in Link02}u0_2[i,j2] 
     + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
     + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]
     + sum{i in I: (i,j2) in Link02} ut2[i,j2])
-    + sum{j3 in L3}VC3_s[j3]*(sum{i in I: (i,j3) in Link03} u0_3[i,j3] 
+    + sum{j3 in L3}VC3[j3]*(sum{i in I: (i,j3) in Link03} u0_3[i,j3] 
     + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
     + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]
     + sum{i in I: (i,j3) in Link03} ut3[i,j3])
     # NO patients Transportation costs  
     # Re-assignment costs:  Transfer IN
     + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-         RC1_s[e1]*(DL1_KM[from,to])*transfer1[e1,from,to]
+         RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-         RC2_s[e2]*(DL2_KM[from,to])*transfer2[e2,from,to]
+         RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3_s[e3]*(DL3_KM[from,to])*transfer3[e3,from,to]
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
     # Re-assignment costs:  Transfer OUT
     + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
-        RC1_s[e1]*(DL1_KM[j1,to])*transfer1[e1,j1,to]
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
     + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
-        RC2_s[e2]*(DL2_KM[j2,to])*transfer2[e2,j2,to]
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
     + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
-        RC3_s[e3]*(DL3_KM[j3,to])*transfer3[e3,j3,to]
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to]
          ;
     # NO Penalty for surplus or deficit
 
 
 # Overall budget constraint
-# s.t. APSBudgetConstraint:  Total_Costs_APS <= BUDGET;
-s.t. APSBudgetConstraint: Total_Costs_APS_s <= BUDGET_s;
+s.t. APSBudgetConstraint:  Total_Costs_APS <= BUDGET;
 
 #################################################
 # OBJECTIVE FUNCTION
 #################################################
 
-# minimize Total_Costs:
-minimize Total_Costs_s:
+minimize Total_Costs:
     # Patient transportation cost
-      sum{i in I, j1 in L1: (i,j1) in Link01}TC0_1_s[i,j1]*u0_1[i,j1] 
-    + sum{i in I, j2 in L2: (i,j2) in Link02}TC0_2_s[i,j2]*u0_2[i,j2] 
-    + sum{i in I, j3 in L3: (i,j3) in Link03}TC0_3_s[i,j3]*u0_3[i,j3]     
-    + sum{j1 in L1, j2 in L2: (j1,j2) in Link12}TC1_2_s[j1,j2]*u1_2[j1,j2]  
-    + sum{j1 in L1, j3 in L3: (j1,j3) in Link13}TC1_3_s[j1,j3]*u1_3[j1,j3]  
-    + sum{j2 in L2, j3 in L3: (j2,j3) in Link23}TC2_3_s[j2,j3]*u2_3[j2,j3] 
+      sum{i in I, j1 in L1: (i,j1) in Link01}TC0_1[i,j1]*u0_1[i,j1] 
+    + sum{i in I, j2 in L2: (i,j2) in Link02}TC0_2[i,j2]*u0_2[i,j2] 
+    + sum{i in I, j3 in L3: (i,j3) in Link03}TC0_3[i,j3]*u0_3[i,j3]     
+    + sum{j1 in L1, j2 in L2: (j1,j2) in Link12}TC1_2[j1,j2]*u1_2[j1,j2]  
+    + sum{j1 in L1, j3 in L3: (j1,j3) in Link13}TC1_3[j1,j3]*u1_3[j1,j3]  
+    + sum{j2 in L2, j3 in L3: (j2,j3) in Link23}TC2_3[j2,j3]*u2_3[j2,j3] 
     # Cost of existing units
-    # + sum{j1 in EL[1] inter L1}FC1_s[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1_s[e]  
-    # + sum{j2 in EL[2] inter L2}FC2_s[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2_s[e] 
-    # + sum{j3 in EL[3] inter L3}FC3_s[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3_s[e]
-    + sum{j1 in EL[1] inter L1}FC1_s[j1]*y1[j1] 
-    + sum{j2 in EL[2] inter L2}FC2_s[j2]*y2[j2] 
-    + sum{j3 in EL[3] inter L3}FC3_s[j3]*y3[j3] 
+    + sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
+    + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
+    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e]
     # Existing PHC expansion cost (annualised investment + incremental operating cost)
-    # + sum{j1 in EL[1] inter L1}(IA1_exp_unit_s + FC1_exp_unit_s)*extra_size1[j1]
-    + sum{j1 in L[1] inter L1}(IA1_exp_unit_s + FC1_exp_unit_s)*extra_size1[j1]
+    + sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1]
     # New unit cost
-    + sum{j1 in CL[1] inter L1}(FC1_s[j1]+IA1_s[j1])*y1[j1] 
-    + sum{j2 in CL[2] inter L2}(FC2_s[j2]+IA2_s[j2])*y2[j2] 
-    + sum{j3 in CL[3] inter L3}(FC3_s[j3]+IA3_s[j3])*y3[j3]    
+    + sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
+    + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
+    + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3]    
     # Cost of NEW teams hired    
     # + sum{j1 in L1, e1 in E[1]}CE1[e1]*newhire1[e1,j1]
     # + sum{j2 in L2, e2 in E[2]}CE2[e2]*newhire2[e2,j2]
     # + sum{j3 in L3, e3 in E[3]}CE3[e3]*newhire3[e3,j3]
-    + sum{j1 in EL[1], e1 in E[1]}CE1_s[e1]*(
+    + sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
     + newhire1[e1,j1])  # New teams hired
-    + sum{j1 in CL[1], e1 in E[1]}CE1_s[e1]*(
+    + sum{j1 in CL[1], e1 in E[1]}CE1[e1]*(
 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN    
     + newhire1[e1,j1])  # New teams hired
 
-    + sum{j2 in EL[2], e2 in E[2]}CE2_s[e2]*(
+    + sum{j2 in EL[2], e2 in E[2]}CE2[e2]*(
 	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN
     - sum{to in L2: to != j2}transfer2[e2,j2,to] # Teams transferred OUT    
     + newhire2[e2,j2]) # New teams hired
-    + sum{j2 in CL[2], e2 in E[2]}CE2_s[e2]*(
+    + sum{j2 in CL[2], e2 in E[2]}CE2[e2]*(
 	sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Teams transferred IN    
     + newhire2[e2,j2]) # New teams hired
 	
-    + sum{j3 in EL[3], e3 in E[3]}CE3_s[e3]*(
+    + sum{j3 in EL[3], e3 in E[3]}CE3[e3]*(
 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN
     - sum{to in L3: to != j3}transfer3[e3,j3,to] # Teams transferred OUT    
     + newhire3[e3,j3]) # New teams hired
-    + sum{j3 in CL[3], e3 in E[3]}CE3_s[e3]*(
+    + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
     + newhire3[e3,j3]) # New teams hired
 
     # Variable cost per patient
-    + sum{j1 in L1}VC1_s[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
+    + sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]              # L2 → L1
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]              # L3 → L1
     + sum{i in I: (i,j1) in Link01} ut1[i,j1])                # Telehealth in L1
-    + sum{j2 in L2}VC2_s[j2]*(sum{i in I: (i,j2) in Link02}u0_2[i,j2] # Home → L2
+    + sum{j2 in L2}VC2[j2]*(sum{i in I: (i,j2) in Link02}u0_2[i,j2] # Home → L2
     + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2]              # L1 → L2
     + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]              # L3 → L2
     + sum{i in I: (i,j2) in Link02} ut2[i,j2])                # Telehealth in L2
-    + sum{j3 in L3}VC3_s[j3]*(sum{i in I: (i,j3) in Link03} u0_3[i,j3] # Home → L3
+    + sum{j3 in L3}VC3[j3]*(sum{i in I: (i,j3) in Link03} u0_3[i,j3] # Home → L3
     + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3]              # L1 → L3
     + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]              # L2 → L2
     + sum{i in I: (i,j3) in Link03} ut3[i,j3])                # Telehealth in L3  
 
     # Re-assignment costs:  Transfer IN
     + sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-         RC1_s[e1]*(DL1_KM[from,to])*transfer1[e1,from,to]
+         RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-         RC2_s[e2]*(DL2_KM[from,to])*transfer2[e2,from,to]
+         RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3_s[e3]*(DL3_KM[from,to])*transfer3[e3,from,to]
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
     # Re-assignment costs:  Transfer OUT
     + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
-        RC1_s[e1]*(DL1_KM[j1,to])*transfer1[e1,j1,to]
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
     + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
-        RC2_s[e2]*(DL2_KM[j2,to])*transfer2[e2,j2,to]
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
     + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
-        RC3_s[e3]*(DL3_KM[j3,to])*transfer3[e3,j3,to]
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to]
     
 
     # Penalty for surplus or deficit 
-    + sum{e1 in E[1], j1 in L1}P1_s*surplus1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}P2_s*surplus2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}P3_s*surplus3[e3,j3] 
-    + sum{e1 in E[1], j1 in L1}P1_s*deficit1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}P2_s*deficit2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}P3_s*deficit3[e3,j3]       
+    + sum{e1 in E[1], j1 in L1}P1*surplus1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}P2*surplus2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}P3*surplus3[e3,j3] 
+    + sum{e1 in E[1], j1 in L1}P1*deficit1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}P2*deficit2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}P3*deficit3[e3,j3]       
     ;
-
 
 
 
@@ -1590,16 +1282,17 @@ printf: "Logist cost:\t\t$%10.2f\n",
 printf: "Fixed cost [Existing]:\t$%10.2f\n", 
       sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
-    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e];
+    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e];    
 printf: "Expansion cost [Existing]:\t$%10.2f\n", 
       sum{j1 in EL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1];
 printf: "Fixed cost [Candidate]:\t$%10.2f\n", 
       sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3];
-printf: "Expansion cost [Candidate]:\t$%10.2f\n", 
-      sum{j1 in CL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1];
 printf: "New team cost:\t\t$%10.2f\n", 
+    #   sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+    # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+    # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3];
     sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
@@ -1622,23 +1315,23 @@ printf: "New team cost:\t\t$%10.2f\n",
     + newhire3[e3,j3]) # New teams hired
     + sum{j3 in CL[3], e3 in E[3]}CE3[e3]*(
 	sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Teams transferred IN    
-    + newhire3[e3,j3]);
+    + newhire3[e3,j3]); # New teams hired
 
 printf: "Team relocation cost:\t$%10.2f\n",
-    # Re-assignment costs:  Transfer IN
+     # Re-assignment costs:  Transfer IN
     sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-         RC1[e1]*(DL1_KM[from,to])*transfer1[e1,from,to]
+         RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-         RC2[e2]*(DL2_KM[from,to])*transfer2[e2,from,to]
+         RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*(DL3_KM[from,to])*transfer3[e3,from,to]
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
     # Re-assignment costs:  Transfer OUT
     + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
-        RC1[e1]*(DL1_KM[j1,to])*transfer1[e1,j1,to]
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
     + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
-        RC2[e2]*(DL2_KM[j2,to])*transfer2[e2,j2,to]
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
     + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
-        RC3[e3]*(DL3_KM[j3,to])*transfer3[e3,j3,to];
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to];
 printf: "Variable Cost:\t\t$%10.2f\n",
     # Variable cost per patient
     sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
@@ -1655,25 +1348,22 @@ printf: "Variable Cost:\t\t$%10.2f\n",
     + sum{i in I: (i,j3) in Link03} ut3[i,j3]);                # Telehealth in L3 
 printf: "========================================\n";
 printf: "Total     Cost:\t\t$%10.2f\n", 
-Total_Costs_s * COST_SCALE
-# If GLPK or Highs...
-# + (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
-#     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
-#     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
-+ (sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
-   + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
-   + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
+Total_Costs
+# If GLPK or Highs...(add this constant value)
++ (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
+    + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
+    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
 - (# Penalty for surplus or deficit 
-    sum{e1 in E[1], j1 in L1}P1_s*surplus1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}P2_s*surplus2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}P3_s*surplus3[e3,j3] 
-    + sum{e1 in E[1], j1 in L1}P1_s*deficit1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}P2_s*deficit2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}P3_s*deficit3[e3,j3]) * COST_SCALE;
-
-printf: "Total APS Cost:\t\t$%10.2f\n", Total_Costs_APS_s * COST_SCALE;
-printf: "Budget Limit:\t\t$%10.2f\n", BUDGET_s * COST_SCALE;
-printf: "Budget Usage:\t\t%.2f%%\n", (Total_Costs_APS_s/BUDGET_s)*100;
+    sum{e1 in E[1], j1 in L1}P1*surplus1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}P2*surplus2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}P3*surplus3[e3,j3] 
+    + sum{e1 in E[1], j1 in L1}P1*deficit1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}P2*deficit2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}P3*deficit3[e3,j3])
+    ;
+printf: "Total APS Cost:\t\t$%10.2f\n", Total_Costs_APS;
+printf: "Budget Limit:\t\t$%10.2f\n", BUDGET;
+printf: "Budget Usage:\t\t%.2f%%\n", (Total_Costs_APS/BUDGET)*100;
 printf: "========================================\n";
 
 
@@ -1708,7 +1398,7 @@ for{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,fr
         if to in CL[1] then "*" else "", 
         e1, 
         transfer1[e1,from,to], 
-        (DL1_KM[from,to]);
+        (DL1[from,to]/1000);
 }
 
 # SHC Team Transfers
@@ -1722,7 +1412,7 @@ for{e2 in E[2], from in EL[2] inter L2, to in L2: from != to and transfer2[e2,fr
         if to in CL[2] then "*" else "",  
         e2, 
         transfer2[e2,from,to], 
-        (DL2_KM[from,to]);
+        (DL2[from,to]/1000);
 }
 
 # THC Team Transfers
@@ -1736,7 +1426,7 @@ for{e3 in E[3], from in EL[3] inter L3, to in L3: from != to and transfer3[e3,fr
         if to in CL[3] then "*" else "", 
         e3, 
         transfer3[e3,from,to], 
-        (DL3_KM[from,to]);
+        (DL3[from,to]/1000);
 }
 
 printf: "\n================================================\n";
@@ -1791,10 +1481,9 @@ for{j1 in L1: ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
             j1,
             if j1 in CL[1] then "*" else "",
             e1,
-            if j1 in EL[1] then CNES1[e1,j1] else 0,
-            round((sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1]) * TEAM_SCALE0_1[i,e1]
-            + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1] * TEAM_SCALE1[e1]
-            + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1] * TEAM_SCALE1[e1])),
+            if j1 in EL[1] then CNES1[e1,j1] else 0,            
+            (sum{i in I: (i,j1) in Link01} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] 
+            + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]*MS1[e1]),
             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
             newhire1[e1,j1],
@@ -1816,14 +1505,14 @@ for{e1 in E[1]}{
     printf: "%-4s\t%.2f\t\t%.2f\n",
         e1,
         # ReqTotal[e1],
-        sum{j1 in L1} (sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1])  * TEAM_SCALE0_1[i,e1]
-            + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1]               * TEAM_SCALE1[e1]
-            + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1]               * TEAM_SCALE1[e1]),
+        sum{j1 in L1} (sum{i in I: (i,j1) in Link01} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1]
+        + sum{j2 in L2: (j2,j1) in Link21} u2_1[j2,j1]*MS1[e1]
+        + sum{j3 in L3: (j3,j1) in Link31} u3_1[j3,j1]*MS1[e1]),
         # ResultTotal[e1];
-        sum{j1 in L1} ((if j1 in EL[1] then POP_PER_TEAM * CNES1[e1,j1] else 0)
-        + POP_PER_TEAM * sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
-        - (if j1 in EL[1] then POP_PER_TEAM * sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
-        + POP_PER_TEAM * newhire1[e1,j1]);
+        sum{j1 in L1} ((if j1 in EL[1] then CNES1[e1,j1] else 0)
+        + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
+        - (if j1 in EL[1] then sum{to in L1: to != j1} transfer1[e1,j1,to] else 0)
+        + newhire1[e1,j1]);
 }
 printf: "===========================================================================\n";
 
@@ -1840,9 +1529,7 @@ for{j2 in L2: ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2])
             if j2 in CL[2] then "*" else "",
             e2,
             if j2 in EL[2] then CNES2[e2,j2] else 0, #CNES
-            round((sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) 
-            + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
-            + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/POP_PER_TEAM),
+            (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])*MS2[e2],
             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
             newhire2[e2,j2],
@@ -1867,9 +1554,7 @@ for{j3 in L3: ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3])
             if j3 in CL[3] then "*" else "",
             e3,
             if j3 in EL[3] then CNES3[e3,j3] else 0,
-            round((sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) 
-            + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
-            + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]) / POP_PER_TEAM),
+            (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])*MS3[e3],
             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
             newhire3[e3,j3],
@@ -1901,17 +1586,17 @@ for{i in I}{
     # PHC
     printf "RC[%-5s]\t\t%d\tDist (km)\n", i, W[i]; 
     for{j1 in L1: (i,j1) in Link01 and u0_1[i,j1] > 0}{
-    printf ">\tL[%-5s]\t%d\t%.2f\n", j1, u0_1[i,j1], (D0_1_KM[i,j1]);}  
+    printf ">\tL[%-5s]\t%d\t%.2f\n", j1, u0_1[i,j1], (D0_1[i,j1]/1000);}  
     for{j1 in L1: (i,j1) in Link01 and ut1[i,j1] > 0}{
     printf ">\tL[%-5s] tel\t%d\n", j1, ut1[i,j1]; }
     # SHC
     for{j2 in L2: (i,j2) in Link02 and u0_2[i,j2] > 0}{
-    printf ">\tL[%-5s]\t%d\t%.2f\n", j2, u0_2[i,j2], (D0_2_KM[i,j2]);} 
+    printf ">\tL[%-5s]\t%d\t%.2f\n", j2, u0_2[i,j2], (D0_2[i,j2]/1000);} 
     for{j2 in L2: (i,j2) in Link02 and ut2[i,j2] > 0}{
     printf ">\tL[%-5s] tel\t%d\n", j2, ut2[i,j2];}     
     # THC
     for{j3 in L3: (i,j3) in Link03 and u0_3[i,j3] > 0}{
-    printf ">\tL[%-5s]\t%d\t%.2f\n", j3, u0_3[i,j3], (D0_3_KM[i,j3]);} 
+    printf ">\tL[%-5s]\t%d\t%.2f\n", j3, u0_3[i,j3], (D0_3[i,j3]/1000);} 
     for{j3 in L3: (i,j3) in Link03 and ut3[i,j3] > 0}{
     printf ">\tL[%-5s] tel\t%d\n", j3, ut3[i,j3];}
 }
@@ -2004,34 +1689,33 @@ printf{j1 in EL[1] inter L1}:
 "[%-5s]:\t%d\t%d\t%d\t%d\t%3d%%\n",
 j1,
 C1[j1],
-extra_size1[j1]*POP_PER_TEAM,
-C1[j1] + extra_size1[j1]*POP_PER_TEAM,
+extra_size1[j1]*3000,
+C1[j1] + extra_size1[j1]*3000,
 (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-if (C1[j1] + extra_size1[j1]*POP_PER_TEAM) > 0 then
+if (C1[j1] + extra_size1[j1]*3000) > 0 then
     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
-    / (C1[j1] + extra_size1[j1]*POP_PER_TEAM)) else 0;
+    / (C1[j1] + extra_size1[j1]*3000))*100 else 0;
 
 printf{j1 in CL[1] inter L1:
         (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
         + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]) > 0}:
-"[%-5s*]:\t%d\t%d\t%d\t%d\t%3d%%\n",
+"[%-5s*]:\t%d\t-\t%d\t%d\t%3d%%\n",
 j1,
 C1[j1],
-extra_size1[j1]*POP_PER_TEAM,
-C1[j1] + extra_size1[j1]*POP_PER_TEAM,
+C1[j1],
 (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-if (C1[j1] + extra_size1[j1]*POP_PER_TEAM) > 0 then
+if C1[j1] > 0 then
     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
-    / (C1[j1] + extra_size1[j1]*POP_PER_TEAM)) else 0;
+    / C1[j1])*100 else 0;
 
 printf: "========================================\n";
 printf: "SHC     :\tCapty\tMet\tUse(%%)\n";
@@ -2122,9 +1806,10 @@ printf: "Fixed cost [Candidate]:\t%.2f\n",
       sum{j1 in CL[1] inter L1}(FC1[j1]+IA1[j1])*y1[j1] 
     + sum{j2 in CL[2] inter L2}(FC2[j2]+IA2[j2])*y2[j2] 
     + sum{j3 in CL[3] inter L3}(FC3[j3]+IA3[j3])*y3[j3] >> Financeiro;
-printf: "Expansion cost [Candidate]:\t%.2f\n", 
-      sum{j1 in CL[1] inter L1}(IA1_exp_unit + FC1_exp_unit)*extra_size1[j1] >> Financeiro;
-printf: "New team cost:\t%.2f\n",
+printf: "New team cost:\t%.2f\n", 
+    #   sum{j1 in L1, c1 in E[1]}CE1[c1]*newhire1[c1,j1] 
+    # + sum{j2 in L2, c2 in E[2]}CE2[c2]*newhire2[c2,j2] 
+    # + sum{j3 in L3, c3 in E[3]}CE3[c3]*newhire3[c3,j3] >> Financeiro;
     sum{j1 in EL[1], e1 in E[1]}CE1[e1]*(
 	sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1]  # Teams transferred IN
     - sum{to in L1: to != j1}transfer1[e1,j1,to]  # Teams transferred OUT    
@@ -2152,18 +1837,18 @@ printf: "New team cost:\t%.2f\n",
 printf: "Team relocation cost:\t%.2f\n",
     # Re-assignment costs:  Transfer IN
     sum{e1 in E[1], from in EL[1] inter L1, to in L1: from != to}
-         RC1[e1]*(DL1_KM[from,to])*transfer1[e1,from,to]
+         RC1[e1]*(DL1[from,to]/1000)*transfer1[e1,from,to]
     + sum{e2 in E[2], from in EL[2] inter L2, to in L2: from != to}
-         RC2[e2]*(DL2_KM[from,to])*transfer2[e2,from,to]
+         RC2[e2]*(DL2[from,to]/1000)*transfer2[e2,from,to]
     + sum{e3 in E[3], from in EL[3] inter L3, to in L3: from != to}
-         RC3[e3]*(DL3_KM[from,to])*transfer3[e3,from,to]
+         RC3[e3]*(DL3[from,to]/1000)*transfer3[e3,from,to]
     # Re-assignment costs:  Transfer OUT
     + sum{e1 in E[1], j1 in EL[1] inter L1, to in L1: to != j1}
-        RC1[e1]*(DL1_KM[j1,to])*transfer1[e1,j1,to]
+        RC1[e1]*(DL1[j1,to]/1000)*transfer1[e1,j1,to]
     + sum{e2 in E[2], j2 in EL[2] inter L2, to in L2: to != j2}
-        RC2[e2]*(DL2_KM[j2,to])*transfer2[e2,j2,to]
+        RC2[e2]*(DL2[j2,to]/1000)*transfer2[e2,j2,to]
     + sum{e3 in E[3], j3 in EL[3] inter L3, to in L3: to != j3}
-        RC3[e3]*(DL3_KM[j3,to])*transfer3[e3,j3,to] >> Financeiro;
+        RC3[e3]*(DL3[j3,to]/1000)*transfer3[e3,j3,to] >> Financeiro;
 printf: "Variable Cost:\t%.2f\n",     
     # Variable cost per patient
     sum{j1 in L1}VC1[j1]*(sum{i in I: (i,j1) in Link01}u0_1[i,j1]  # Home → L1
@@ -2180,25 +1865,22 @@ printf: "Variable Cost:\t%.2f\n",
     + sum{i in I: (i,j3) in Link03} ut3[i,j3]) >> Financeiro;  # Telehealth in L3
 printf: "========================================\n";
 printf: "Total Cost:\t%.2f\n", 
-Total_Costs_s * COST_SCALE
+Total_Costs 
 # If GLPK or Highs...
-# + (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
-#     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
-#     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
-+ (sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
-   + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
-   + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
++ (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
+    + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
+    + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
 - (# Penalty for surplus or deficit 
-    sum{e1 in E[1], j1 in L1}P1_s*surplus1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}P2_s*surplus2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}P3_s*surplus3[e3,j3] 
-    + sum{e1 in E[1], j1 in L1}P1_s*deficit1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}P2_s*deficit2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}P3_s*deficit3[e3,j3]) * COST_SCALE
+    sum{e1 in E[1], j1 in L1}P1*surplus1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}P2*surplus2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}P3*surplus3[e3,j3] 
+    + sum{e1 in E[1], j1 in L1}P1*deficit1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}P2*deficit2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}P3*deficit3[e3,j3]) 
     >> Financeiro;
-printf: "Total APS Cost:\t%.2f\n", Total_Costs_APS_s * COST_SCALE >> Financeiro;
-printf: "Budget Limit:\t%.2f\n", BUDGET_s * COST_SCALE >> Financeiro;
-printf: "Budget Usage (%%):\t%.2f\n", (Total_Costs_APS_s/BUDGET_s) >> Financeiro;
+printf: "Total APS Cost:\t%.2f\n", Total_Costs_APS >> Financeiro;
+printf: "Budget Limit:\t%.2f\n", BUDGET >> Financeiro;
+printf: "Budget Usage (%%):\t%.2f\n", (Total_Costs_APS/BUDGET) >> Financeiro;
 printf: "========================================\n";
 
 
@@ -2235,7 +1917,7 @@ for{e1 in E[1], from in EL[1] inter L1, to in L1: from != to and transfer1[e1,fr
         if to in CL[1] then "*" else "", 
         e1, 
         transfer1[e1,from,to], 
-        (DL1_KM[from,to]) >> RealocacaoEquipe_PHC;
+        (DL1[from,to]/1000) >> RealocacaoEquipe_PHC;
 }
 
 # SHC Team Transfers
@@ -2250,7 +1932,7 @@ for{e2 in E[2], from in EL[2] inter L2, to in L2: from != to and transfer2[e2,fr
         if to in CL[2] then "*" else "",  
         e2, 
         transfer2[e2,from,to], 
-        (DL2_KM[from,to]) >> RealocacaoEquipe_SHC;
+        (DL2[from,to]/1000) >> RealocacaoEquipe_SHC;
 }
 
 # THC Team Transfers
@@ -2265,7 +1947,7 @@ for{e3 in E[3], from in EL[3] inter L3, to in L3: from != to and transfer3[e3,fr
         if to in CL[3] then "*" else "", 
         e3, 
         transfer3[e3,from,to], 
-        (DL3_KM[from,to]) >> RealocacaoEquipe_THC;
+        (DL3[from,to]/1000) >> RealocacaoEquipe_THC;
 }
 
 
@@ -2325,10 +2007,9 @@ for{j1 in L1: ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
             j1,
             if j1 in CL[1] then "*" else "",
             e1,
-            if j1 in EL[1] then CNES1[e1,j1] else 0,
-            round((sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1]) * TEAM_SCALE0_1[i,e1]
-            + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1] * TEAM_SCALE1[e1]
-            + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1] * TEAM_SCALE1[e1])),
+            if j1 in EL[1] then CNES1[e1,j1] else 0,            
+            (sum{i in I: (i,j1) in Link01} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] 
+            + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]*MS1[e1]),
             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
             newhire1[e1,j1],
@@ -2375,9 +2056,7 @@ for{j2 in L2: ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2])
             if j2 in CL[2] then "*" else "",
             e2,
             if j2 in EL[2] then CNES2[e2,j2] else 0, #CNES
-            round((sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) 
-            + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
-            + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/POP_PER_TEAM),
+            (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])*MS2[e2],
             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
             newhire2[e2,j2],
@@ -2402,9 +2081,7 @@ for{j3 in L3: ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3])
             if j3 in CL[3] then "*" else "",
             e3,
             if j3 in EL[3] then CNES3[e3,j3] else 0,
-            round((sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) 
-            + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
-            + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]) / POP_PER_TEAM),
+            (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])*MS3[e3],
             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
             newhire3[e3,j3],
@@ -2437,17 +2114,17 @@ for{i in I}{
     # PHC
     printf "RC[%s]\t\t%d\tDist (km)\n", i, W[i] >> Fluxo_RegCensitaria; 
     for{j1 in L1: (i,j1) in Link01 and u0_1[i,j1] > 0}{
-    printf ">\tL[%s]\t%d\t%.2f\n", j1, u0_1[i,j1], (D0_1_KM[i,j1]) >> Fluxo_RegCensitaria;}  
+    printf ">\tL[%s]\t%d\t%.2f\n", j1, u0_1[i,j1], (D0_1[i,j1]/1000) >> Fluxo_RegCensitaria;}  
     for{j1 in L1: (i,j1) in Link01 and ut1[i,j1] > 0}{
     printf ">\tL[%s] tel\t%d\n", j1, ut1[i,j1] >> Fluxo_RegCensitaria; }
     # SHC
     for{j2 in L2: (i,j2) in Link02 and u0_2[i,j2] > 0}{
-    printf ">\tL[%s]\t%d\t%.2f\n", j2, u0_2[i,j2], (D0_2_KM[i,j2]) >> Fluxo_RegCensitaria;} 
+    printf ">\tL[%s]\t%d\t%.2f\n", j2, u0_2[i,j2], (D0_2[i,j2]/1000) >> Fluxo_RegCensitaria;} 
     for{j2 in L2: (i,j2) in Link02 and ut2[i,j2] > 0}{
     printf ">\tL[%s] tel\t%d\n", j2, ut2[i,j2] >> Fluxo_RegCensitaria;}     
     # THC
     for{j3 in L3: (i,j3) in Link03 and u0_3[i,j3] > 0}{
-    printf ">\tL[%s]\t%d\t%.2f\n", j3, u0_3[i,j3], (D0_3_KM[i,j3]) >> Fluxo_RegCensitaria;} 
+    printf ">\tL[%s]\t%d\t%.2f\n", j3, u0_3[i,j3], (D0_3[i,j3]/1000) >> Fluxo_RegCensitaria;} 
     for{j3 in L3: (i,j3) in Link03 and ut3[i,j3] > 0}{
     printf ">\tL[%s] tel\t%d\n", j3, ut3[i,j3] >> Fluxo_RegCensitaria;}
 }
@@ -2469,16 +2146,18 @@ for{j1 in L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
         sum{i in I: (i,j1) in Link01}(u0_1[i,j1] + ut1[i,j1])
         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
         + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1] >> Fluxo_PHC;
-        
+        # sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]), 
+        # sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1], 
+        # sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1] >> Fluxo_PHC; 
     # Reg
     for{i in I: (j1,i) in Link10 and u1_0[j1,i] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", i, u1_0[j1,i], (D1_0_KM[j1,i]) >> Fluxo_PHC;} # O1_0[j1]*
+    printf">\tL[%s]\t%d\t%.2f\n", i, u1_0[j1,i], (D1_0[j1,i]/1000) >> Fluxo_PHC;} # O1_0[j1]*
     # SHC
     for{j2 in L2: (j1,j2) in Link12 and u1_2[j1,j2] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", j2, u1_2[j1,j2], (D1_2_KM[j1,j2]) >> Fluxo_PHC;} # O1_2[j1]*
+    printf">\tL[%s]\t%d\t%.2f\n", j2, u1_2[j1,j2], (D1_2[j1,j2]/1000) >> Fluxo_PHC;} # O1_2[j1]*
     # THC
     for{j3 in L3: (j1,j3) in Link13 and u1_3[j1,j3] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", j3, u1_3[j1,j3], (D1_3_KM[j1,j3]) >> Fluxo_PHC;} # O1_3[j1]*
+    printf">\tL[%s]\t%d\t%.2f\n", j3, u1_3[j1,j3], (D1_3[j1,j3]/1000) >> Fluxo_PHC;} # O1_3[j1]*
 }
 
 printf: "========================================\n";
@@ -2494,16 +2173,18 @@ for{j2 in L2: (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
         sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2])
         + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
         + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2] >> Fluxo_SHC;
-        
+        # sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]), 
+        # sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2], 
+        # sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2] >> Fluxo_SHC;
     # Reg
     for{i in I: (j2,i) in Link20 and u2_0[j2,i] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", i, u2_0[j2,i], (D2_0_KM[j2,i]) >> Fluxo_SHC;} 
+    printf">\tL[%s]\t%d\t%.2f\n", i, u2_0[j2,i], (D2_0[j2,i]/1000) >> Fluxo_SHC;} 
     # PHC
     for{j1 in L1: (j2,j1) in Link21 and u2_1[j2,j1] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", j1, u2_1[j2,j1], (D2_1_KM[j2,j1]) >> Fluxo_SHC;}
+    printf">\tL[%s]\t%d\t%.2f\n", j1, u2_1[j2,j1], (D2_1[j2,j1]/1000) >> Fluxo_SHC;}
     # THC
     for{j3 in L3: (j2,j3) in Link23 and u2_3[j2,j3] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", j3, u2_3[j2,j3], (D2_3_KM[j2,j3]) >> Fluxo_SHC;}
+    printf">\tL[%s]\t%d\t%.2f\n", j3, u2_3[j2,j3], (D2_3[j2,j3]/1000) >> Fluxo_SHC;}
 }
 
 printf: "========================================\n";
@@ -2519,17 +2200,35 @@ for{j3 in L3: (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
         sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3])
         + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
         + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3] >> Fluxo_THC;
-        
+        # sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]), 
+        # sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3], 
+        # sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3] >> Fluxo_THC;
     # Reg
     for{i in I: (j3,i) in Link30 and u3_0[j3,i] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", i, u3_0[j3,i], (D3_0_KM[j3,i]) >> Fluxo_THC;} 
+    printf">\tL[%s]\t%d\t%.2f\n", i, u3_0[j3,i], (D3_0[j3,i]/1000) >> Fluxo_THC;} 
     # PHC
     for{j1 in L1: (j3,j1) in Link31 and u3_1[j3,j1] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", j1, u3_1[j3,j1], (D3_1_KM[j3,j1]) >> Fluxo_THC;}
+    printf">\tL[%s]\t%d\t%.2f\n", j1, u3_1[j3,j1], (D3_1[j3,j1]/1000) >> Fluxo_THC;}
     # SHC
     for{j2 in L2: (j3,j2) in Link32 and u3_2[j3,j2] > 0}{
-    printf">\tL[%s]\t%d\t%.2f\n", j2, u3_2[j3,j2], (D3_2_KM[j3,j2]) >> Fluxo_THC;}
+    printf">\tL[%s]\t%d\t%.2f\n", j2, u3_2[j3,j2], (D3_2[j3,j2]/1000) >> Fluxo_THC;}
 }
+
+# printf: "========================================\n";
+# printf: "PHC\tCapty\tMet\tUse\n" > Uso_PHC;
+# printf: "========================================\n";
+# printf{j1 in EL[1] inter L1}: 
+# "[%s]\t%d\t%d\t%.2f\n", j1,  
+# C1[j1], 
+# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0 >> Uso_PHC;
+
+# printf{j1 in CL[1] inter L1: (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])>0}: 
+# "[%s*]:\t%d\t%d\t%.2f\n", j1, 
+# C1[j1], 
+# (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
+# if C1[j1] > 0 then ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ ut1[i,j1]) + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])/(C1[j1]))*100 else 0 >> Uso_PHC;
+
 
 printf: "=======================================================\n";
 printf: "PHC\tCapty\tExp\tTCapty\tMet\tUse\n" > Uso_PHC;
@@ -2539,34 +2238,33 @@ printf{j1 in EL[1] inter L1}:
 "[%s]\t%d\t%d\t%d\t%d\t%5.2f\n",
 j1,
 C1[j1],
-extra_size1[j1]*POP_PER_TEAM,
-C1[j1] + extra_size1[j1]*POP_PER_TEAM,
+extra_size1[j1]*3000,
+C1[j1] + extra_size1[j1]*3000,
 (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-if (C1[j1] + extra_size1[j1]*POP_PER_TEAM) > 0 then
+if (C1[j1] + extra_size1[j1]*3000) > 0 then
     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
-    / (C1[j1] + extra_size1[j1]*POP_PER_TEAM)) else 0 >> Uso_PHC;
+    / (C1[j1] + extra_size1[j1]*3000)) else 0 >> Uso_PHC;
 
 printf{j1 in CL[1] inter L1:
         (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
         + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
         + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]) > 0}:
-"[%s*]\t%d\t%d\t%d\t%d\t%5.2f\n",
+"[%s*]\t%d\t-\t%d\t%d\t%5.2f\n",
 j1,
 C1[j1],
-extra_size1[j1]*POP_PER_TEAM,
-C1[j1] + extra_size1[j1]*POP_PER_TEAM,
+C1[j1],
 (sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]),
-if (C1[j1] + extra_size1[j1]*POP_PER_TEAM) > 0 then
+if C1[j1] > 0 then
     ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
     + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
     + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])
-    / (C1[j1] + extra_size1[j1]*POP_PER_TEAM)) else 0 >> Uso_PHC;
+    / C1[j1]) else 0 >> Uso_PHC;
 
 
 printf: "========================================\n";
