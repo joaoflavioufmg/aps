@@ -18,6 +18,9 @@
 
 # py check_data_consistency.py LS_CLU.dat LS_CLU_distdur.dat
 # py check_data_consistency.py Cont_CLU.dat Cont_CLU_distdur.dat
+# py check_data_consistency.py MC_CLU.dat MC_CLU_distdur.dat
+# py check_data_consistency.py BH_CLU.dat BH_CLU_distdur.dat
+# py check_data_consistency.py Div_CLU.dat Div_CLU_distdur.dat
 
 # glpsol -m aps.mod -d aps.dat -d city.dat --mipgap 0.01 --cuts --check --wlp aps.lp
 # glpsol -m aps.mod -d aps.dat --mipgap 0.01 --cuts --check --wlp aps.lp
@@ -693,7 +696,7 @@ s.t. R0a{i in I}:
 
 # # Patients assigned to closest health unit (>>> HARD CONSTRAINT!<<<)
 # s.t. R0b (>>> HARD CONSTRAINT!<<<)
-# s.t. R0b{i in I, j1 in L1: (i,j1) in Link01}: sum{k1 in L1: (i,k1) in Link01 and D0_1[i,k1]>D0_1[i,j1]}y0_1[i,k1] + y1[j1] <= 1;
+s.t. R0b{i in I, j1 in L1: (i,j1) in Link01}: sum{k1 in L1: (i,k1) in Link01 and D0_1[i,k1]>D0_1[i,j1]}y0_1[i,k1] + y1[j1] <= 1;
 
 # s.t. R0c{i in I, j2 in L2: (i,j2) in Link02}: sum{k2 in L2: D0_2[i,k2]>D0_2[i,j2]}y0_2[i,k2] + y2[j2] <= 1;
 # s.t. R0d{i in I, j3 in L3: (i,j3) in Link03}: sum{k3 in L3: D0_3[i,k3]>D0_3[i,j3]}y0_3[i,k3] + y3[j3] <= 1;
