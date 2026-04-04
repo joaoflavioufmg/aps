@@ -114,7 +114,8 @@ class Diagnostic:
 class DataValidator:
 
     # Model constants matching aps.mod defaults
-    SIZE_MAX     = 5     # param SIZE{L[1]}, default 1, <= 5
+    SIZE_DEFAULT = 3     # param SIZE{L[1]}, default 3, <= 5
+    SIZE_MAX     = 5     # param SIZE{L[1]}, default 3, <= 5
     POP_PER_SIZE = 3000  # C1[j1] := SIZE[j1] * 3000
     MAX_HOME_SHC = 0.15  # R0l: u0_2 <= 0.15 * W[i]
     MAX_HOME_THC = 0.05  # R0m: u0_3 <= 0.05 * W[i]
@@ -134,7 +135,9 @@ class DataValidator:
             'D0_1_count': 0,
             'D0_2_count': 0,
             'D0_3_count': 0,
-            'D0_1':      {},   # (i, j1) -> metres  — used for Check 9
+            'D0_1':      {},   # (i, j1) -> metres  — used for Checks 9 & 10
+            'D0_2':      {},   # (i, j2) -> metres  — used for Check 10
+            'D0_3':      {},   # (i, j3) -> metres  — used for Check 10
         }
         self.errors      = []
         self.warnings    = []
@@ -249,16 +252,15 @@ class DataValidator:
             if m:
                 tokens = m.group(1).strip().split()
                 self.data[count_key] += len(tokens) // 3
-                if dist_key == 'D0_1':
-                    it = iter(tokens)
-                    try:
-                        while True:
-                            i  = next(it)
-                            j  = next(it)
-                            dv = float(next(it))
-                            self.data['D0_1'][(i, j)] = dv
-                    except StopIteration:
-                        pass
+                it = iter(tokens)
+                try:
+                    while True:
+                        i  = next(it)
+                        j  = next(it)
+                        dv = float(next(it))
+                        self.data[dist_key][(i, j)] = dv
+                except StopIteration:
+                    pass
 
     # --------------------------------------------------------------------------
     # Orchestration
@@ -279,6 +281,7 @@ class DataValidator:
         self.check_facility_connectivity()
         self.check_network_balance()
         self.check_r0b_spatial_lock()
+        self.check_distance_coverage()
 
         self.print_results()
 
@@ -354,7 +357,7 @@ class DataValidator:
             if sized:
                 self.info.append(
                     f"SIZE defined for {len(sized)}/{len(el1)} existing L[1] facilities "
-                    f"(C1 = SIZE x {self.POP_PER_SIZE}, default SIZE=1)"
+                    f"(C1 = SIZE x {self.POP_PER_SIZE}, default SIZE={self.SIZE_DEFAULT})"
                 )
             else:
                 self.info.append(
@@ -379,7 +382,7 @@ class DataValidator:
 
         el1 = self.data['EL'][1]
         if el1 and self.data['SIZE']:
-            c1_vals = [self.data['SIZE'].get(j, 1) * self.POP_PER_SIZE for j in el1]
+            c1_vals = [self.data['SIZE'].get(j, self.SIZE_DEFAULT) * self.POP_PER_SIZE for j in el1]
             self.info.append(
                 f"C1 (SIZE x {self.POP_PER_SIZE}): "
                 f"min={min(c1_vals)}, max={max(c1_vals)}, "
@@ -433,13 +436,42 @@ class DataValidator:
 
         if not self.data['W']:
             return
-        total = sum(self.data['W'].values())
-        avg   = total / len(self.data['W'])
-        lo    = min(self.data['W'].values())
-        hi    = max(self.data['W'].values())
+        vals  = list(self.data['W'].values())
+        n     = len(vals)
+        total = sum(vals)
+        avg   = total / n
+        lo    = min(vals)
+        hi    = max(vals)
+
+        # Median
+        sorted_vals = sorted(vals)
+        mid = n // 2
+        median = (sorted_vals[mid] if n % 2 == 1
+                  else (sorted_vals[mid - 1] + sorted_vals[mid]) / 2)
+
+        # Mode (most frequent value; show up to 3 if there are ties)
+        freq = defaultdict(int)
+        for v in vals:
+            freq[v] += 1
+        max_freq = max(freq.values())
+        modes = sorted(k for k, c in freq.items() if c == max_freq)
+        if len(modes) <= 3:
+            mode_str = ', '.join(f"{m:.0f}" for m in modes)
+        else:
+            mode_str = (', '.join(f"{m:.0f}" for m in modes[:3])
+                        + f" … (+{len(modes)-3} more ties)")
+        mode_str += f" (freq={max_freq})"
+
+        # Population standard deviation
+        variance = sum((v - avg) ** 2 for v in vals) / n
+        std_dev  = math.sqrt(variance)
+
         self.info.append(f"Total demand: {total:.0f}")
         self.info.append(f"Range: [{lo:.0f}, {hi:.0f}]")
         self.info.append(f"Average: {avg:.1f}")
+        self.info.append(f"Median:  {median:.1f}")
+        self.info.append(f"Mode:    {mode_str}")
+        self.info.append(f"Std Dev: {std_dev:.1f}")
 
     def check_facility_connectivity(self):
         print("\n[CHECK 7] Facility Connectivity")
@@ -552,7 +584,7 @@ class DataValidator:
         min_l1_frac = 1.0 - max_bypass   # ~0.79
 
         def cap_filter(j):
-            return MAX_C1 if j in el1 else sizes.get(j, 1) * self.POP_PER_SIZE
+            return MAX_C1 if j in el1 else sizes.get(j, self.SIZE_DEFAULT) * self.POP_PER_SIZE
 
         def in_link01(i, j):
             return (
@@ -593,7 +625,7 @@ class DataValidator:
                 irred = max(0.0, fd * min_l1_frac - cap)
                 violations.append({
                     'phc':     j,
-                    'size':    sizes.get(j, 1),
+                    'size':    sizes.get(j, self.SIZE_DEFAULT),
                     'cap':     cap,
                     'fd':      fd,
                     'n_orig':  len(locked),
@@ -669,7 +701,7 @@ class DataValidator:
                 f"          geometric lock without changing any data file.\n"
                 f"\n"
                 f"Option B  Raise the SIZE ceiling for PHC {j} in aps.mod\n"
-                f"          Change 'param SIZE{{L[1]}}, default 1, <= {self.SIZE_MAX}'\n"
+                f"          Change 'param SIZE{{L[1]}}, default {self.SIZE_DEFAULT}, <= {self.SIZE_MAX}'\n"
                 f"          to '<= {min_size_needed}' specifically for this PHC\n"
                 f"          ({min_size_needed} x {self.POP_PER_SIZE} = "
                 f"{min_size_needed * self.POP_PER_SIZE:,} >= irreducible load "
@@ -710,6 +742,141 @@ class DataValidator:
                 table_headers=tbl_headers,
                 table_rows=tbl_rows,
             ))
+
+    # --------------------------------------------------------------------------
+    # Check 10 — Distance Matrix Coverage (no missing O-D pairs)
+    # --------------------------------------------------------------------------
+
+    def check_distance_coverage(self):
+        """
+        Verify that every required origin–destination pair has a distance
+        value in the data files.
+
+        The model declares:
+            param D0_1{i in I, j1 in L[1]};   # no default
+            param D0_2{i in I, j2 in L[2]};   # no default
+            param D0_3{i in I, j3 in L[3]};   # no default
+
+        A missing (i, j) entry causes GLPK to abort with
+        "no value for D0_k[i, j]" before the solve even starts.
+        """
+        print("\n[CHECK 10] Distance Matrix Coverage")
+        print("-" * 80)
+
+        MAX_LISTED = 50   # cap on individual missing-pair lines printed
+
+        for dist_key, level in [('D0_1', 1), ('D0_2', 2), ('D0_3', 3)]:
+            I   = self.data['I']
+            L_k = self.data['L'][level]
+            d   = self.data[dist_key]
+
+            if not I or not L_k:
+                self.info.append(
+                    f"{dist_key} coverage: skipped "
+                    f"(I or L[{level}] not defined)"
+                )
+                continue
+
+            if not d:
+                # already flagged by check_distance_parameters
+                continue
+
+            expected   = len(I) * len(L_k)
+            defined    = len(d)
+            missing_pairs = [
+                (i, j) for i in sorted(I) for j in sorted(L_k)
+                if (i, j) not in d
+            ]
+            n_missing = len(missing_pairs)
+
+            if n_missing == 0:
+                self.info.append(
+                    f"{dist_key} coverage: complete "
+                    f"({defined}/{expected} pairs defined)"
+                )
+                continue
+
+            # --- summarise by origin ---
+            by_origin = defaultdict(list)
+            for (i, j) in missing_pairs:
+                by_origin[i].append(j)
+
+            n_origins_missing = len(by_origin)
+            pct = 100.0 * n_missing / expected
+
+            self.errors.append(
+                f"{dist_key} coverage: {n_missing} of {expected} pairs missing "
+                f"({pct:.1f}%) — affects {n_origins_missing} origin(s). "
+                f"GLPK will abort with 'no value for {dist_key}[i,j]'."
+            )
+
+            # Build a rich diagnostic with a per-origin table
+            tbl_headers = ["Origin", "# missing dests", "Missing destinations (first 5)"]
+            tbl_rows    = []
+            listed = 0
+            for origin in sorted(by_origin):
+                missing_dests = by_origin[origin]
+                sample = missing_dests[:5]
+                sample_str = ', '.join(sample)
+                if len(missing_dests) > 5:
+                    sample_str += f" … (+{len(missing_dests)-5} more)"
+                tbl_rows.append([origin, str(len(missing_dests)), sample_str])
+                listed += 1
+                if listed >= MAX_LISTED:
+                    tbl_rows.append([
+                        f"… +{n_origins_missing - listed} more origins",
+                        "—", "—"
+                    ])
+                    break
+
+            # Flat list of the first MAX_LISTED missing pairs (mirrors GLPK error format)
+            flat_examples = []
+            for (i, j) in missing_pairs[:MAX_LISTED]:
+                flat_examples.append(f"no value for {dist_key}[{i},{j}]")
+            if n_missing > MAX_LISTED:
+                flat_examples.append(
+                    f"… ({n_missing - MAX_LISTED} more missing pairs not shown)"
+                )
+
+            what_msg = (
+                f"{dist_key} requires one entry for every (origin, facility) pair "
+                f"because it is declared without a default value in aps.mod "
+                f"(param {dist_key}{{I, L[{level}]}}). "
+                f"Out of {expected} required pairs, {n_missing} ({pct:.1f}%) are absent. "
+                f"{n_origins_missing} distinct origin(s) are affected."
+            )
+            why_msg  = (
+                f"GLPK evaluates D0_{level}_KM and set Link0{level} by iterating\n"
+                f"over ALL pairs in I × L[{level}]. Any missing entry triggers\n"
+                f"an immediate 'MathProg model processing error' before the solve."
+            )
+            fix_msg  = (
+                f"Add the missing {n_missing} (origin, facility, distance) triples\n"
+                f"to the {dist_key} block in the *_distdur.dat file.\n"
+                f"Each line must follow the format:\n"
+                f"  <origin_id>  <facility_id>  <distance_in_metres>\n"
+                f"e.g.:\n"
+                + "\n".join(f"  {flat_examples[k]}" for k in range(min(3, len(flat_examples))))
+            )
+
+            self.diagnostics.append(Diagnostic(
+                level='ERROR',
+                title=(
+                    f"{dist_key} missing {n_missing} of {expected} O-D pairs "
+                    f"— model will abort at preprocessing"
+                ),
+                what=what_msg,
+                why=why_msg,
+                fix=fix_msg,
+                table_headers=tbl_headers,
+                table_rows=tbl_rows,
+            ))
+
+            # Also print flat list inline so it mirrors the GLPK error output
+            print(f"\n  Missing {dist_key} pairs ({min(n_missing, MAX_LISTED)} shown"
+                  + (f" of {n_missing}" if n_missing > MAX_LISTED else "") + "):")
+            for line in flat_examples:
+                print(f"    {line}")
 
     # --------------------------------------------------------------------------
     # Output
