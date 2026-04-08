@@ -1,0 +1,2 @@
+Location	Team	Qty
+[THC1]	EQ3	1.00

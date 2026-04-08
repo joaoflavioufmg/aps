@@ -21,10 +21,12 @@ model aps.mod;
 # data LS_distdur.dat;
 # data LS_CLU.dat;
 # data LS_CLU_distdur.dat;
-data Cont_CLU.dat;
-data Cont_CLU_distdur.dat;
+# data Div_CLU.dat;
+# data Div_CLU_distdur.dat;
 # data MC_CLU.dat;
 # data MC_CLU_distdur.dat;
+data Cont_CLU.dat;
+data Cont_CLU_distdur.dat;
 # data BH_CLU.dat;
 # data BH_CLU_distdur.dat;
 
@@ -59,7 +61,7 @@ option gurobi_options $gurobi_options
 'barconvtol 1e-8'
 'mipfocus 1'
 'presolve 2'
-'mipgap 0.3'
+'mipgap 5e-2'
 'outlev 1'
 'threads 0'
 'timing 1'
@@ -1094,13 +1096,13 @@ printf: "========================================\n";
 printf{j2 in EL[2] inter L2}: "[%s]\t%d\t%d\t%.2f\n", j2, 
 C2[j2], 
 (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]),
-if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2]))*100 else 0 >> "17-Uso_SHC.txt";
+if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2])) else 0 >> "17-Uso_SHC.txt";
 
 printf{j2 in CL[2] inter L2: (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])>0}: 
 "[%s*]\t%d\t%d\t%.2f\n", j2, 
 C2[j2], 
 (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]),
-if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2]))*100 else 0 >> "17-Uso_SHC.txt";
+if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2])) else 0 >> "17-Uso_SHC.txt";
 
 printf: "========================================\n";
 printf: "THC\tCapty\tMet\tUse\n" > "18-Uso_THC.txt";
@@ -1108,13 +1110,13 @@ printf: "========================================\n";
 printf{j3 in EL[3] inter L3}: "[%s]\t%d\t%d\t%.2f\n", j3, 
 C3[j3], 
 (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]),
-if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3]))*100 else 0 >> "18-Uso_THC.txt";
+if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3])) else 0 >> "18-Uso_THC.txt";
 
 printf{j3 in CL[3] inter L3: (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])>0}: 
 "[%s*]\t%d\t%d\t%.2f\n", j3, 
 C3[j3], 
 (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]),
-if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3]))*100 else 0 >> "18-Uso_THC.txt";
+if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3])) else 0 >> "18-Uso_THC.txt";
 printf: "========================================\n\n";
 
 end;

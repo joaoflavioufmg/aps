@@ -1,0 +1,2 @@
+THC	Capty	Met	Use
+[THC1]	4000000	34880	0.87

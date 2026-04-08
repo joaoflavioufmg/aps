@@ -1,15 +1,12 @@
-REM glpsol -m aps.mod -d aps.dat -d 31.dat --wlp aps.lp --check
-REM highs --model_file .\aps.lp --options_file aps.opt 
-REM glpsol -m aps.mod -d aps.dat -d 31.dat -r aps.sol
-
 @echo off
 echo Running GLPSOL to generate LP...
 @REM call glpsol -m aps.mod -d aps.dat --cuts --scale --adv --check --wmps aps.mps --nomip
 @REM call glpsol -m aps.mod -d LS.dat -d LS_distdur.dat --cuts --scale --adv --check --wmps aps.mps --nomip
 @REM call glpsol -m aps.mod -d LS_CLU.dat -d LS_CLU_distdur.dat --cuts --scale --adv --check --wmps aps.mps --nomip
+@REM call glpsol -m aps.mod -d Div_CLU.dat -d Div_CLU_distdur.dat --cuts --scale --adv --check --wmps aps.mps --nomip
+call glpsol -m aps.mod -d MC_CLU.dat -d MC_CLU_distdur.dat --cuts --scale --adv --check --wmps aps.mps --nomip
 @REM call glpsol -m aps.mod -d Cont_CLU.dat -d Cont_CLU_distdur.dat --cuts --scale --adv --check --wmps aps.mps --nomip
-@REM call glpsol -m aps.mod -d MC_CLU.dat -d MC_CLU_distdur.dat --cuts --scale --adv --check --wmps aps.mps --nomip
-call glpsol -m aps.mod -d BH_CLU.dat -d BH_CLU_distdur.dat --mipgap 0.05 --cuts --scale --adv 
+@REM call glpsol -m aps.mod -d BH_CLU.dat -d BH_CLU_distdur.dat --cuts --scale --adv --check --wmps aps.mps --nomip
 
 
 
@@ -22,6 +19,7 @@ echo Running GLPSOL again to generate solution...
 @REM call glpsol -m aps.mod -d aps.dat -r aps.sol
 @REM call glpsol -m aps.mod -d LS.dat -d LS_distdur.dat -r aps.sol
 @REM call glpsol -m aps.mod -d LS_CLU.dat -d LS_CLU_distdur.dat -r aps.sol
+@REM call glpsol -m aps.mod -d Div_CLU.dat -d Div_CLU_distdur.dat -r aps.sol
+call glpsol -m aps.mod -d MC_CLU.dat -d MC_CLU_distdur.dat -r aps.sol
 @REM call glpsol -m aps.mod -d Cont_CLU.dat -d Cont_CLU_distdur.dat -r aps.sol
-@REM call glpsol -m aps.mod -d MC_CLU.dat -d MC_CLU_distdur.dat -r aps.sol
-call glpsol -m aps.mod -d BH_CLU.dat -d BH_CLU_distdur.dat --mipgap 0.05 -r aps.sol
+@REM call glpsol -m aps.mod -d BH_CLU.dat -d BH_CLU_distdur.dat -r aps.sol

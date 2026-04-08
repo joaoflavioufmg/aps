@@ -11,20 +11,22 @@
 #############################################################################
 
 # Before running: CHECK: 
-# py check_data_consistency.py LS.dat
-# py check_data_consistency.py LS.dat LS_distdur.dat
+# py check_data_consistency.py foo.dat
+# py check_data_consistency.py foo.dat dist.dat
 # py check_data_consistency.py *.dat
-# py check_data_consistency.py LS.dat > report.txt
+# py check_data_consistency.py foo.dat > report.txt
+# py check_data_consistency.py foo.dat dist.dat > report.txt
 
 # py check_data_consistency.py LS_CLU.dat LS_CLU_distdur.dat
-# py check_data_consistency.py Cont_CLU.dat Cont_CLU_distdur.dat
-# py check_data_consistency.py MC_CLU.dat MC_CLU_distdur.dat
-# py check_data_consistency.py BH_CLU.dat BH_CLU_distdur.dat
 # py check_data_consistency.py Div_CLU.dat Div_CLU_distdur.dat
+# py check_data_consistency.py MC_CLU.dat MC_CLU_distdur.dat
+# py check_data_consistency.py Cont_CLU.dat Cont_CLU_distdur.dat
+# py check_data_consistency.py BH_CLU.dat BH_CLU_distdur.dat
 
-# glpsol -m aps.mod -d aps.dat -d city.dat --mipgap 0.01 --cuts --check --wlp aps.lp
-# glpsol -m aps.mod -d aps.dat --mipgap 0.01 --cuts --check --wlp aps.lp
-# highs --model_file .\aps.lp --aps options.opt 
+
+# glpsol -m aps.mod -d aps.dat -d city.dat --mipgap 0.01 --cuts --check --wmps aps.mps
+# glpsol -m aps.mod -d aps.dat --mipgap 0.01 --cuts --check --wmps aps.mps
+# highs --model_file .\aps.mps --aps options.opt 
 # glpsol -m aps.mod -d aps.dat -d city.dat -r aps.sol
 
 
@@ -157,8 +159,12 @@ param W{I}; # The population size at demand point i (pop) (pop cluster)
 
 # Service operating capacity at IHC j
 # The capacity of a level-1 PCF in K. (pop)
-param SIZE{L[1]}, default 3, <= 5; # Porte da UBS
+param SIZE0{L[1]}, default 3, <= 5; # Porte da UBS  # original values
+param SIZEX{i in L[1]} default 0; # Exceptions UBS with very high demand
+param SIZE{i in L[1]}:= if SIZEX[i] > 0 then SIZEX[i] else SIZE0[i];
+# display SIZE;
 param C1{j1 in L[1]} := SIZE[j1]*POP_PER_TEAM; 
+# display C1;
 param C2{L[2]}; # The capacity of a level-2 PCF in J.   (pop)
 param C3{L[3]}; # The capacity of a level-3 PCF in J.   (pop)
 
@@ -589,7 +595,7 @@ var y3{j3 in L3}, >=0, binary; # 1, if a L-3 TCF is used
 # Bound: SIZE[j1] + extra_size1[j1] <= 5  (max real size = 5)
 # ---------------------------------------------------------------
 # var extra_size1{j1 in EL[1] inter L1}, integer, >= 0, <= 3; # - SIZE[j1];
-var extra_size1{j1 in L[1] inter L1}, integer, >= 0, <= 5 - SIZE[j1];
+var extra_size1{j1 in L[1] inter L1}, integer, >= 0, <= 5 - SIZE0[j1];
 # var extra_size1{j1 in EL[1] inter L1}, integer, >= 0;
 
 
@@ -2578,13 +2584,13 @@ minimize Total_Costs_s:
 # printf{j2 in EL[2] inter L2}: "[%s]\t%d\t%d\t%.2f\n", j2, 
 # C2[j2], 
 # (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]),
-# if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2]))*100 else 0 >> Uso_SHC;
+# if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2])) else 0 >> Uso_SHC;
 
 # printf{j2 in CL[2] inter L2: (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])>0}: 
 # "[%s*]\t%d\t%d\t%.2f\n", j2, 
 # C2[j2], 
 # (sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]),
-# if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2]))*100 else 0 >> Uso_SHC;
+# if C2[j2] > 0 then ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2] + ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/(C2[j2])) else 0 >> Uso_SHC;
 
 # printf: "========================================\n";
 # printf: "THC\tCapty\tMet\tUse\n" > Uso_THC;
@@ -2592,13 +2598,13 @@ minimize Total_Costs_s:
 # printf{j3 in EL[3] inter L3}: "[%s]\t%d\t%d\t%.2f\n", j3, 
 # C3[j3], 
 # (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]),
-# if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3]))*100 else 0 >> Uso_THC;
+# if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3])) else 0 >> Uso_THC;
 
 # printf{j3 in CL[3] inter L3: (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])>0}: 
 # "[%s*]\t%d\t%d\t%.2f\n", j3, 
 # C3[j3], 
 # (sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]),
-# if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3]))*100 else 0 >> Uso_THC;
+# if C3[j3] > 0 then ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3] + ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])/(C3[j3])) else 0 >> Uso_THC;
 # printf: "========================================\n\n";
 
 # ########################################################################

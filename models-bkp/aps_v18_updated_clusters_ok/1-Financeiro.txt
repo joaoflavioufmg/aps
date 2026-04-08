@@ -1,0 +1,12 @@
+Logist cost:	3333544.81
+Fixed cost [Existing]:	84495513.00
+Expansion cost [Existing]:	2554048.00
+Fixed cost [Candidate]:	2534030.00
+Expansion cost [Candidate]:	0.00
+New team cost:	4627673.00
+Team relocation cost:	13534.08
+Variable Cost:	3216932.14
+Total Cost:	100775275.03
+Total APS Cost:	97441730.22
+Budget Limit:	105637927.06
+Budget Usage (%):	0.92

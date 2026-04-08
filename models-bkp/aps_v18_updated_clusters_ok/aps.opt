@@ -1,0 +1,6 @@
+mip_rel_gap=0.3
+time_limit=10000
+write_solution_style=2
+solution_file=aps.sol
+log_file=log_highs.log
+user_bound_scale = -10
