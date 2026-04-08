@@ -25,10 +25,10 @@ model aps.mod;
 # data Div_CLU_distdur.dat;
 # data MC_CLU.dat;
 # data MC_CLU_distdur.dat;
-data Cont_CLU.dat;
-data Cont_CLU_distdur.dat;
-# data BH_CLU.dat;
-# data BH_CLU_distdur.dat;
+# data Cont_CLU.dat;
+# data Cont_CLU_distdur.dat;
+data BH_CLU.dat;
+data BH_CLU_distdur.dat;
 
 
 # data data/LS_Cluster.dat;
