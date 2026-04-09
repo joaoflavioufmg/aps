@@ -21,14 +21,14 @@ model aps.mod;
 # data LS_distdur.dat;
 # data LS_CLU.dat;
 # data LS_CLU_distdur.dat;
-# data Div_CLU.dat;
-# data Div_CLU_distdur.dat;
+data Div_CLU.dat;
+data Div_CLU_distdur.dat;
 # data MC_CLU.dat;
 # data MC_CLU_distdur.dat;
 # data Cont_CLU.dat;
 # data Cont_CLU_distdur.dat;
-data BH_CLU.dat;
-data BH_CLU_distdur.dat;
+# data BH_CLU.dat;
+# data BH_CLU_distdur.dat;
 
 
 # data data/LS_Cluster.dat;
@@ -61,7 +61,7 @@ option gurobi_options $gurobi_options
 'barconvtol 1e-8'
 'mipfocus 1'
 'presolve 2'
-'mipgap 5e-2'
+'mipgap 1.3e-2'
 'outlev 1'
 'threads 0'
 'timing 1'
