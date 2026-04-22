@@ -21,14 +21,14 @@ model aps.mod;
 # data LS_distdur.dat;
 # data LS_CLU.dat;
 # data LS_CLU_distdur.dat;
-data Div_CLU.dat;
-data Div_CLU_distdur.dat;
+# data Div_CLU.dat;
+# data Div_CLU_distdur.dat;
 # data MC_CLU.dat;
 # data MC_CLU_distdur.dat;
 # data Cont_CLU.dat;
 # data Cont_CLU_distdur.dat;
-# data BH_CLU.dat;
-# data BH_CLU_distdur.dat;
+data BH_CLU.dat;
+data BH_CLU_distdur.dat;
 
 
 # data data/LS_Cluster.dat;
@@ -61,17 +61,17 @@ option gurobi_options $gurobi_options
 'barconvtol 1e-8'
 'mipfocus 1'
 'presolve 2'
-'mipgap 1.3e-2'
+'mipgap 0.05'
 'outlev 1'
 'threads 0'
 'timing 1'
-'timelim 10000'
+'timelim 30000'
 #    'lpmethod 1'
 #   'presparsify 1'
 #   'pivtol 0.1'
 #   'intfeastol 1.e-9'
 #   'numericfocus 2'
-#  'Cuts 0'
+ 'cuts 2'
   'logfile log_gurobi.log'
 ;
 
@@ -91,11 +91,22 @@ option gurobi_options $gurobi_options
 # logfile aps.log';
 # ################################
 
+
+
+
+
+
+
+
+
 solve;
 
-#################################################
-# OUTPUT REPORTS
-#################################################
+
+# ########################################################################
+
+# # ################################################
+# # OUTPUT REPORTS
+# # ################################################
 
 # printf: "\n========================================\n";
 # printf: "Health Care Plan with Team Reallocation\n";
@@ -168,21 +179,26 @@ solve;
 
 # # If GLPK or Highs...(add this constant value)
 # printf: "Total     Cost:\t\t$%10.2f\n", 
-# Total_Costs
-# + (sum{j1 in EL[1] inter L1}FC1[j1]*y1[j1] + sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
-#     + sum{j2 in EL[2] inter L2}FC2[j2]*y2[j2] + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
-#     + sum{j3 in EL[3] inter L3}FC3[j3]*y3[j3] + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
-# - (
-#     sum{e1 in E[1], j1 in L1}P1*surplus1[e1,j1] 
-#     + sum{e2 in E[2], j2 in L2}P2*surplus2[e2,j2] 
-#     + sum{e3 in E[3], j3 in L3}P3*surplus3[e3,j3] 
-#     + sum{e1 in E[1], j1 in L1}P1*deficit1[e1,j1] 
-#     + sum{e2 in E[2], j2 in L2}P2*deficit2[e2,j2] 
-#     + sum{e3 in E[3], j3 in L3}P3*deficit3[e3,j3])
+# Total_Costs_s * COST_SCALE
+
+# + (sum{e in E[1], j1 in EL[1]}CNES1[e,j1]*CE1[e]  
+#    + sum{e in E[2], j2 in EL[2]}CNES2[e,j2]*CE2[e] 
+#    + sum{e in E[3], j3 in EL[3]}CNES3[e,j3]*CE3[e])
+# - (# Penalty for surplus or deficit 
+#     sum{e1 in E[1], j1 in L1}P1_s*surplus1[e1,j1] 
+#     + sum{e2 in E[2], j2 in L2}P2_s*surplus2[e2,j2] 
+#     + sum{e3 in E[3], j3 in L3}P3_s*surplus3[e3,j3] 
+#     + sum{e1 in E[1], j1 in L1}P1_d*deficit1[e1,j1] 
+#     + sum{e2 in E[2], j2 in L2}P2_d*deficit2[e2,j2] 
+#     + sum{e3 in E[3], j3 in L3}P3_d*deficit3[e3,j3]) * COST_SCALE
 #     ;
-# printf: "Total APS Cost:\t\t$%10.2f\n", Total_Costs_APS;
-# printf: "Budget Limit:\t\t$%10.2f\n", BUDGET;
-# printf: "Budget Usage:\t\t%.2f%%\n", (Total_Costs_APS/BUDGET)*100;
+# printf: "Total APS Cost:\t\t$%10.2f\n", Total_Costs_APS_s * COST_SCALE;
+# printf: "Budget Limit:\t\t$%10.2f\n", BUDGET_s * COST_SCALE;
+# printf: "Budget Usage:\t\t%.2f%%\n", (Total_Costs_APS_s/BUDGET_s)*100;
+# printf: "Budget Overrun:\t\t$%10.2f\n", budget_slack * COST_SCALE;
+# printf: "Overrun Pct:\t\t%.2f%%\n",
+#     if BUDGET_s > 0 then (budget_slack / BUDGET_s) * 100 else 0;
+# printf: "Effective Budget:\t$%10.2f\n", (BUDGET_s + budget_slack) * COST_SCALE;
 # printf: "========================================\n";
 
 
@@ -296,19 +312,20 @@ solve;
 # + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]
 # + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1])>0) or j1 in EL[1] and sum{e1 in E[1]} CNES1[e1,j1] > 0}{
 #     for{e1 in E[1]}{
-#         printf: "[%-7s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+#         printf: "[%-7s]%s\t%-4s\t%.1f\t%.2f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
 #             j1,
 #             if j1 in CL[1] then "*" else "",
 #             e1,
-#             if j1 in EL[1] then CNES1[e1,j1] else 0,            
-#             (sum{i in I: (i,j1) in Link01} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1] 
-#             + sum{j2 in L2: (j2,j1) in Link21}u2_1[j2,j1]*MS1[e1] + sum{j3 in L3: (j3,j1) in Link31}u3_1[j3,j1]*MS1[e1]),
-#             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] 
-#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), 
+#             if j1 in EL[1] then CNES1[e1,j1] else 0,
+#             (sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1]) * TEAM_SCALE0_1[i,e1]
+#             + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1] * TEAM_SCALE1[e1]
+#             + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1] * TEAM_SCALE1[e1]),
+#             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
+#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
 #             newhire1[e1,j1],
-#             (if j1 in EL[1] then CNES1[e1,j1] else 0) 
-#             + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] 
-#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0) 
+#             (if j1 in EL[1] then CNES1[e1,j1] else 0) # Result: CNES +
+#             + sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
+#             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0) # Teams transferred OUT            
 #             + newhire1[e1,j1],
 #             surplus1[e1,j1],
 #             deficit1[e1,j1];
@@ -323,9 +340,9 @@ solve;
 # for{e1 in E[1]}{
 #     printf: "%-4s\t%.2f\t\t%.2f\n",
 #         e1,        
-#         sum{j1 in L1} (sum{i in I: (i,j1) in Link01} (u0_1[i,j1] + ut1[i,j1])*MS0_1[i,e1]
-#         + sum{j2 in L2: (j2,j1) in Link21} u2_1[j2,j1]*MS1[e1]
-#         + sum{j3 in L3: (j3,j1) in Link31} u3_1[j3,j1]*MS1[e1]),
+#         sum{j1 in L1} (sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1])  * TEAM_SCALE0_1[i,e1]
+#             + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1]               * TEAM_SCALE1[e1]
+#             + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1]               * TEAM_SCALE1[e1]),
 
 #         sum{j1 in L1} ((if j1 in EL[1] then CNES1[e1,j1] else 0)
 #         + sum{from in EL[1] inter L1: from != j1} transfer1[e1,from,j1]
@@ -342,18 +359,20 @@ solve;
 # + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
 # + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2]) > 0) or j2 in EL[2] and sum{e2 in E[2]} CNES2[e2,j2] > 0}{
 #     for{e2 in E[2]}{
-#         printf: "[%-7s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+#         printf: "[%-7s]%s\t%-4s\t%.1f\t%.2f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
 #             j2,
 #             if j2 in CL[2] then "*" else "",
 #             e2,
-#             if j2 in EL[2] then CNES2[e2,j2] else 0, 
-#             (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])*MS2[e2],
-#             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] 
-#             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), 
+#             if j2 in EL[2] then CNES2[e2,j2] else 0, #CNES
+#             (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) 
+#             + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
+#             + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/POP_PER_TEAM,
+#             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
+#             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
 #             newhire2[e2,j2],
-#             (if j2 in EL[2] then CNES2[e2,j2] else 0) 
-#             + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] 
-#             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0) 
+#             (if j2 in EL[2] then CNES2[e2,j2] else 0) # CNES
+#             + sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
+#             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0) # Teams transferred OUT
 #             + newhire2[e2,j2],
 #             surplus2[e2,j2],
 #             deficit2[e2,j2];
@@ -367,18 +386,20 @@ solve;
 # + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
 # + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]) > 0) or j3 in EL[3] and sum{e3 in E[3]} CNES3[e3,j3] > 0}{
 #     for{e3 in E[3]}{
-#         printf: "[%-7s]%s\t%-4s\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
+#         printf: "[%-7s]%s\t%-4s\t%.1f\t%.2f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n",
 #             j3,
 #             if j3 in CL[3] then "*" else "",
 #             e3,
 #             if j3 in EL[3] then CNES3[e3,j3] else 0,
-#             (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3])*MS3[e3],
-#             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] 
-#             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), 
+#             (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) 
+#             + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
+#             + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]) / POP_PER_TEAM,
+#             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
+#             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
 #             newhire3[e3,j3],
-#             (if j3 in EL[3] then CNES3[e3,j3] else 0) 
-#             + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] 
-#             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0) 
+#             (if j3 in EL[3] then CNES3[e3,j3] else 0) # CNES
+#             + sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
+#             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0) # Teams transferred OUT
 #             + newhire3[e3,j3],
 #             surplus3[e3,j3],
 #             deficit3[e3,j3];
@@ -581,10 +602,9 @@ solve;
 
 # printf: "==========================================================="; 
 # printf: "===========================================================\n";
+# printf:"Desenvolvimento: Joao Flavio de F. Almeida\t\n";
 
-# # printf:"\n\nRelatorio gerado em: %s\t\n",time;
-# # printf:"Desenvolvimento: Joao Flavio de F. Almeida\t\n";
-
+# ########################################################################
 
 
 
@@ -708,13 +728,17 @@ Total_Costs_s * COST_SCALE
     sum{e1 in E[1], j1 in L1}P1_s*surplus1[e1,j1] 
     + sum{e2 in E[2], j2 in L2}P2_s*surplus2[e2,j2] 
     + sum{e3 in E[3], j3 in L3}P3_s*surplus3[e3,j3] 
-    + sum{e1 in E[1], j1 in L1}P1_s*deficit1[e1,j1] 
-    + sum{e2 in E[2], j2 in L2}P2_s*deficit2[e2,j2] 
-    + sum{e3 in E[3], j3 in L3}P3_s*deficit3[e3,j3]) * COST_SCALE 
+    + sum{e1 in E[1], j1 in L1}P1_d*deficit1[e1,j1] 
+    + sum{e2 in E[2], j2 in L2}P2_d*deficit2[e2,j2] 
+    + sum{e3 in E[3], j3 in L3}P3_d*deficit3[e3,j3]) * COST_SCALE 
     >> '1-Financeiro.txt';
 printf: "Total APS Cost:\t%.2f\n", Total_Costs_APS_s * COST_SCALE  >> '1-Financeiro.txt';
 printf: "Budget Limit:\t%.2f\n", BUDGET_s * COST_SCALE >> '1-Financeiro.txt';
 printf: "Budget Usage (%%):\t%.2f\n", (Total_Costs_APS_s/BUDGET_s) >> '1-Financeiro.txt';
+printf: "Budget Overrun:\t%.2f\n", budget_slack * COST_SCALE >> '1-Financeiro.txt';
+printf: "Overrun (%%):\t%.2f\n", 
+if BUDGET_s > 0 then (budget_slack / BUDGET_s) else 0 >> '1-Financeiro.txt';
+printf: "Effective Budget:\t%.2f\n", (BUDGET_s + budget_slack) * COST_SCALE >> '1-Financeiro.txt';
 printf: "========================================\n";
 
 
@@ -842,9 +866,9 @@ for{j1 in L1: ((sum{i in I: (i,j1) in Link01}(u0_1[i,j1]+ut1[i,j1])
             if j1 in CL[1] then "*" else "",
             e1,
             if j1 in EL[1] then CNES1[e1,j1] else 0,
-            round((sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1]) * TEAM_SCALE0_1[i,e1]
+            (sum{i  in I:  (i,j1)  in Link01} (u0_1[i,j1]  + ut1[i,j1]) * TEAM_SCALE0_1[i,e1]
             + sum{j2 in L2: (j2,j1) in Link21}  u2_1[j2,j1] * TEAM_SCALE1[e1]
-            + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1] * TEAM_SCALE1[e1])),
+            + sum{j3 in L3: (j3,j1) in Link31}  u3_1[j3,j1] * TEAM_SCALE1[e1]),
             sum{from in EL[1] inter L1: from != j1}transfer1[e1,from,j1] # Transfers IN
             - (if j1 in EL[1] then sum{to in L1: to != j1}transfer1[e1,j1,to] else 0), # Teams transferred OUT            
             newhire1[e1,j1],
@@ -890,9 +914,9 @@ for{j2 in L2: ((sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2])
             if j2 in CL[2] then "*" else "",
             e2,
             if j2 in EL[2] then CNES2[e2,j2] else 0, #CNES
-            round((sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) 
+            (sum{i in I: (i,j2) in Link02}(u0_2[i,j2]+ut2[i,j2]) 
             + sum{j1 in L1: (j1,j2) in Link12}u1_2[j1,j2] 
-            + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/POP_PER_TEAM),
+            + sum{j3 in L3: (j3,j2) in Link32}u3_2[j3,j2])/POP_PER_TEAM,
             sum{from in EL[2] inter L2: from != j2}transfer2[e2,from,j2] # Transfers IN
             - (if j2 in EL[2] then sum{to in L2: to != j2}transfer2[e2,j2,to] else 0), # Teams transferred OUT            
             newhire2[e2,j2],
@@ -917,9 +941,9 @@ for{j3 in L3: ((sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3])
             if j3 in CL[3] then "*" else "",
             e3,
             if j3 in EL[3] then CNES3[e3,j3] else 0,
-            round((sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) 
+            (sum{i in I: (i,j3) in Link03}(u0_3[i,j3]+ut3[i,j3]) 
             + sum{j1 in L1: (j1,j3) in Link13}u1_3[j1,j3] 
-            + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]) / POP_PER_TEAM),
+            + sum{j2 in L2: (j2,j3) in Link23}u2_3[j2,j3]) / POP_PER_TEAM,
             sum{from in EL[3] inter L3: from != j3}transfer3[e3,from,j3] # Transfers IN
             - (if j3 in EL[3] then sum{to in L3: to != j3}transfer3[e3,j3,to] else 0), # Teams transferred OUT            
             newhire3[e3,j3],
